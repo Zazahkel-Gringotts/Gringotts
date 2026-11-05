@@ -1,0 +1,46 @@
+</style>
+</head>
+<body>
+<div class="bgart" aria-hidden="true"></div>
+<div class="app">
+  <nav class="side" aria-label="Sections">
+    <div class="brand"><span class="seal" role="img" aria-label="Sceau de la banque"></span><span>Gringotts<small>WoW Forever · Alchimie &amp; Enchantement</small></span></div>
+    <ul class="nav" id="nav">
+      <li><a href="#controle" data-view="controle">Tour de contrôle</a></li>
+      <li><a href="#crafts" data-view="crafts">Crafts <span class="pills"><span class="pill" id="pillLoss" hidden></span><span class="pill info" id="pillBuy" hidden></span><span class="pill ok" id="pillMake" hidden></span></span></a></li>
+      <li><a href="#enchant" data-view="enchant">Enchantements</a></li>
+      <li><a href="#stock" data-view="stock">Stock &amp; achats <span class="pills"><span class="pill ok" id="pillLow" hidden></span><span class="pill warn" id="pillHigh" hidden></span></span></a></li>
+      <li><a href="#finances" data-view="finances">Finances</a></li>
+      <li><a href="#desench" data-view="desench">Désenchantement</a></li>
+      <li><a href="#recettes" data-view="recettes">Recettes</a></li>
+      <li><a href="#import" data-view="import">Comptoir</a></li>
+      <li><a href="#reglages" data-view="reglages">Réglages</a></li>
+    </ul>
+    <p class="freshness" id="fresh"></p>
+    <div class="syncbox"><button class="btn sm" id="syncBtn" type="button">↻ Synchroniser</button><p class="freshness" id="syncSt"></p></div>
+    <div class="forever" role="img" aria-label="World of Warcraft Forever"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="veil" data-close></div>
+  <div class="pane" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <button class="btn x" data-close aria-label="Fermer">✕</button>
+    <div id="dBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="lock" id="lock" hidden>
+  <form class="lockbox" id="lockForm" autocomplete="on">
+    <span class="seal" role="img" aria-label="Sceau de la banque"></span>
+    <h1>Gringotts</h1>
+    <p class="muted">Mot de passe de la banque</p>
+    <input type="password" id="lockPw" autocomplete="current-password" aria-label="Mot de passe" placeholder="Mot de passe">
+    <label class="rem"><input type="checkbox" id="lockRem" checked> Se souvenir sur cet appareil</label>
+    <button class="btn primary" id="lockGo" type="submit">Ouvrir</button>
+    <p id="lockMsg" class="lockmsg" role="alert"></p>
+    <a href="#" id="lockSkip" class="muted">Continuer sans synchronisation</a>
+  </form>
+</div>
+
+<script id="seed" type="application/json">
