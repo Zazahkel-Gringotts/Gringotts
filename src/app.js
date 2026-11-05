@@ -1418,11 +1418,11 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
     <div id="trackOut"></div></details>
 
-  ${stepH(2, "Hôtel des ventes : scan puis export")}
-  <p class="muted" style="margin-top:0">Scan complet Auctionator (ou recherche de la liste « Gringotts - Suivi »), puis bouton <b>Export Gringotts</b> (ou <code>/gt</code>) et Ctrl+C.</p>
+  ${stepH(2, "Hôtel des ventes : scan puis envoi")}
+  <p class="muted" style="margin-top:0">Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> (ou <code>/gt sync</code>) et <b>Entrée</b> pour le <code>/reload</code>. Sur le PC, lance <b>Envoyer.bat</b> : l'export part chiffré vers GitHub.</p>
 
-  ${stepH(3, "Dashboard : coller l'export")}
-  <p class="muted" style="margin-top:0">Prix, stock total, recettes, niveaux, ventes et temps de recharge en une fois. Un nouvel import le même jour remplace les prix du jour. L'export CSV d'une liste Auctionator reste accepté (prix seuls).</p>
+  ${stepH(3, "Dashboard : synchroniser")}
+  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes et temps de recharge. Il se lance aussi tout seul à l'ouverture. <b>Secours</b> : coller un export <code>/gt export</code> ci-dessous (ou l'export CSV d'une liste Auctionator, prix seuls).</p>
   <textarea id="impText" placeholder="WFC1;…  (export Gringotts)"></textarea>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="impParse">Analyser</button><button class="btn primary" id="impApply" disabled>Enregistrer les prix du ${fmtDate(today())}</button></div>
   <div id="impOut"></div>
@@ -1967,14 +1967,14 @@ async function sendToAddon(){
     await w.write(dashLua(gameText())); await w.close();
     toast("Décisions écrites dans l'addon : tape /reload en jeu"); return {ok:true};
   } catch(e) {
-    if (e && e.name === "AbortError") return {ok:false, code:"ABORT"};
+    if (e && e.name === "AbortError") { downloadDash(); return {ok:false, code:"ABORT"}; }   // dossier refusé par Chrome (ex. Program Files) ou annulé : on télécharge le fichier
     toast("Écriture impossible (" + (e && e.name || "erreur") + ") : utilise « Télécharger Dash.lua »"); return {ok:false, code:"ERR"};
   }
 }
 function downloadDash(){
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([dashLua(gameText())], {type:"text/plain"})); a.download = "Dash.lua";
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  toast("Dash.lua téléchargé : copie-le dans AddOns\\Gringotts (ou lance Appliquer.bat), puis /reload");
+  toast("Dash.lua téléchargé : lance Appliquer.bat, puis /reload en jeu");
 }
 
 // ---------- Synchronisation GitHub (données chiffrées par le script Windows) ----------
