@@ -1648,25 +1648,26 @@ function decisionReport(){
 const stepH = (n, t) => `<h2 style="display:flex;align-items:center;gap:10px"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--bg);font-size:14px">${n}</span>${t}</h2>`;
 views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0).length; return `
   <h1>Comptoir <span class="muted" style="font-size:.6em;font-weight:400">· Routine de session</span></h1>
-  <p class="lede">Routine du jour, dans l'ordre : relevés en jeu → envoi → décisions → retour dans le jeu. Un perso dont le contenu n'a pas changé n'a pas besoin d'être connecté : ses derniers relevés restent dans le dashboard.</p>
+  <p class="lede">Routine du jour, dans l'ordre : persos de jeu → perso banque en dernier (relevés + scan HV) → un seul envoi → décisions → retour dans le jeu. Le jeu n'écrit les données d'un perso qu'à sa déconnexion ou à son <code>/reload</code> : le perso banque, connecté en dernier, charge les relevés des autres et les exporte tous.</p>
 
   <div class="impgrid">
   <div class="impcol">
-  ${stepH(1, "Perso banque : relevés")}
+  ${stepH(1, "Persos de jeu : jouer puis se déconnecter")}
   <div class="tw" style="padding:12px 16px"><ul style="margin:0;padding-left:18px;line-height:1.7">
-    <li>Se connecter (sacs relevés automatiquement), ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés).</li>
-    <li>Un perso qui n'a rien changé depuis le dernier export reste déconnecté. Un perso avec métiers : ouvrir ses <b>fenêtres de métier</b> (recettes, temps de recharge, niveaux).</li>
+    <li>Se connecter sur chaque perso qui a bougé (sacs relevés automatiquement), jouer, puis le <b>déconnecter</b> (ou <code>/reload</code>) : c'est ce qui écrit ses données (stock, or, niveaux). Un perso sans changement reste déconnecté.</li>
+    <li>Ce qu'un perso gagne <b>après</b> sa déconnexion n'est pas dans l'export : il sera relevé à la routine suivante.</li>
+    <li>Un perso avec métiers : ouvrir ses <b>fenêtres de métier</b> avant de se déconnecter (recettes, temps de recharge, niveaux).</li>
     <li>La liste Auctionator <b>« Gringotts - Suivi »</b> est créée par l'addon à la connexion.</li>
   </ul></div>
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Suivi » (${trackList().length} objets)</summary>
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
     <div id="trackOut"></div></details>
 
-  ${stepH(2, "Hôtel des ventes : scan puis export")}
-  <p class="muted" style="margin-top:0">Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> dans la fenêtre de l'HV (ou <code>/gt sync</code>), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque.</p>
+  ${stepH(2, "Perso banque en dernier : relevés, scan HV, export")}
+  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> dans la fenêtre de l'HV (ou <code>/gt sync</code>), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque.</p>
 
   ${stepH(3, "Bureau : Envoyer.bat")}
-  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> fait (tu peux être déjà connecté sur un autre perso). L'export part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
+  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> du perso banque fait : un seul envoi suffit, il contient tous les persos. L'export part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
 
   ${stepH(4, "Dashboard : synchroniser")}
   <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes, or et temps de recharge. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
