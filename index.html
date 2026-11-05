@@ -1127,17 +1127,18 @@ function compAdvCell(c){
 }
 views.stock = () => {
   const f = filters.stock;
-  let rows = M.comps.filter(c => (!f.used || c.used) && (!f.q || norm(c.n).includes(norm(f.q))) && (f.sig==="all" || c.sig===f.sig || (f.sig==="buy" && c.toBuy>0)));
+  const anyUsed = M.comps.some(c => c.used) || M.pnjRows.some(p => p.used), useF = f.used && anyUsed;   // sans recette apprise, le filtre ne laisserait rien : on affiche tout
+  let rows = M.comps.filter(c => (!useF || c.used) && (!f.q || norm(c.n).includes(norm(f.q))) && (f.sig==="all" || c.sig===f.sig || (f.sig==="buy" && c.toBuy>0)));
   rows = sortRows("stock", rows, "delta", "asc");
   const toBuy = M.comps.filter(c=>c.used && c.toBuy>0);
-  const pnjShown = M.pnjRows.filter(p => !f.used || p.used);
+  const pnjShown = M.pnjRows.filter(p => !useF || p.used);
   return `
   <h1>Stock &amp; achats</h1>
   <p class="lede">Signal d'achat : prix actuel comparé à la médiane 30 j (seuil ±${pct(state.settings.buyTh)}). Le meilleur jour d'achat est le jour le moins cher en moyenne sur les semaines complètes de reset (mercredi → mardi). Stock et cibles sont modifiables. Priorité du prix d'achat : prix marchand relevé par Gringotts &gt; liste PNJ &gt; HV. Le conseil croise la cible (pilotée par les ventes), le signal de prix et la direction du prix sur 7 jours (↘ en baisse, ↗ en hausse). Tag <span class="st" style="color:var(--info);border-color:var(--info)">Montée</span> : composant réservé par un plan de montée (le réassort achète le manque ; vous pouvez quand même vendre).</p>
   <div class="toolbar">
     <input type="search" data-f="stock.q" value="${esc(f.q)}" placeholder="Rechercher un composant" aria-label="Rechercher un composant">
     <select data-f="stock.sig" aria-label="Signal">${[["all","Tous les signaux"],["ok","Acheter"],["warn","Neutre"],["bad","Trop cher"],["buy","À réassortir"]].map(([v,l])=>`<option value="${v}"${f.sig===v?" selected":""}>${l}</option>`).join("")}</select>
-    <label><input type="checkbox" data-f="stock.used"${f.used?" checked":""}> Seulement les compos de mes recettes</label>
+    <label><input type="checkbox" data-f="stock.used"${f.used?" checked":""}> Seulement les compos de mes recettes</label>${f.used && !anyUsed ? ` <span class="muted small">(aucune recette apprise relevée : tous les composants sont affichés)</span>` : ""}
     <span class="count">${rows.length} composants</span>
   </div>
   <div class="note ${M.slotsUsed > state.settings.slots ? "warn" : "ok"}">Place occupée par les stocks cibles : <b>${M.slotsUsed}</b> / ${state.settings.slots} emplacements. Cible auto pilotée par les ventes : crafts qui se vendent → ventes/jour × ${state.settings.horizon||7} j ; crafts sans historique → ${state.settings.depth/2} crafts × facteur d'obtention ; crafts à perte ou qui s'écoulent mal → 0. En piles pleines ; si la place manque, les piles qui rapportent le moins d'or par jour sont retirées d'abord. Survolez une cible pour sa raison. Champ vide = auto ; bordure orange = cible manuelle. Tag Montée « A / B » : A = besoin des 2 prochaines étapes de montée (acheté et compté dans la place), B = besoin total jusqu'à 300 (info, pas stocké d'avance). <a href="#reglages">Réglages</a></div>
