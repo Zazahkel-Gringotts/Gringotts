@@ -598,7 +598,8 @@ function rebuild(){
     const a = auto[k]; const manualT = state.target[k] !== undefined;
     const target = manualT ? +state.target[k] : (a ? a.target : 0); const res = reserve[k] || null;
     const toBuy = Math.max(0, target-stock, res ? res.nearNet - stock : 0);
-    return {n:p.n, k, used: used.has(k) || !!res, res, st: stackSize(p.n, S), manualT, autoT: a ? a.target : 0, vendor:p.vendor, p:p.p, stock, target, toBuy, refill: toBuy*p.p, value: stock*p.p}; });
+    const rel = VEND[k] && isFinite(VEND[k].p) ? VEND[k].p : null, pr = rel !== null ? rel : p.p;
+    return {n:p.n, k, used: used.has(k) || !!res, res, st: stackSize(p.n, S), manualT, autoT: a ? a.target : 0, vendor:p.vendor, p:pr, rel: rel !== null, stock, target, toBuy, refill: toBuy*pr, value: stock*pr}; });
   // Coût par craft de toutes les recettes (apprises ou non) pour la progression des métiers
   const recCost = {};
   ALL_CRAFTS().forEach(c => { const lines = mkLines(c.r); const cost = lines.some(l=>l.p===null) ? null : lines.reduce((a,l)=>a+l.tot,0);
@@ -918,7 +919,7 @@ views.stock = () => {
   </tbody></table></div>` : `<div class="tw empty">Aucune vente relevée sur 30 j : la cible des produits finis apparaîtra avec les premières ventes (boîte aux lettres + export).</div>`}
   <h2>Fournitures PNJ</h2>
   <div class="tw scroll"><table><thead><tr><th>Article</th><th>Vendeur</th><th class="r">Prix PNJ</th><th class="r">Stock</th><th class="r" title="Vide = cible auto ; saisie = cible manuelle">Cible</th><th class="r">Piles</th><th class="r">À acheter</th><th class="r">Coût réassort</th></tr></thead><tbody>
-  ${pnjShown.map(p => `<tr><td>${esc(p.n)}${p.res ? ` <span class="st" style="color:var(--info);border-color:var(--info)" title="Réservé : ${esc([...p.res.why].join(", "))}${p.res.prod?` · ${p.res.prod} produits par le plan`:""}">Montée ${p.res.nearNet}${p.res.net > p.res.nearNet ? ` / ${p.res.net}` : ""}</span>` : ""}</td><td class="muted">${esc(p.vendor)}</td><td class="r">${money(p.p)}</td>
+  ${pnjShown.map(p => `<tr><td>${esc(p.n)}${p.res ? ` <span class="st" style="color:var(--info);border-color:var(--info)" title="Réservé : ${esc([...p.res.why].join(", "))}${p.res.prod?` · ${p.res.prod} produits par le plan`:""}">Montée ${p.res.nearNet}${p.res.net > p.res.nearNet ? ` / ${p.res.net}` : ""}</span>` : ""}</td><td class="muted">${esc(p.vendor)}</td><td class="r">${money(p.p)} <span class="st ${p.rel?"ok":"warn"}" title="${p.rel?"Prix relevé chez le marchand par Gringotts":"Prix de la liste de départ : pas encore relevé en jeu"}">${p.rel?"relevé":"liste"}</span></td>
     <td class="r"><input class="num" type="number" min="0" step="1" data-pstock="${esc(p.n)}" value="${p.stock}" aria-label="Stock ${esc(p.n)}"></td>
     <td class="r"><input class="num" type="number" min="0" step="1" data-target="${esc(p.n)}" value="${p.manualT ? p.target : ""}" placeholder="${p.autoT}" aria-label="Cible ${esc(p.n)}" style="${p.manualT?"border-color:var(--warn)":""}"></td>
     <td class="r muted">${p.target ? `${Math.ceil(p.target/p.st)} × ${p.st}` : "—"}</td>
