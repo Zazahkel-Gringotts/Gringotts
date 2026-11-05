@@ -1648,52 +1648,54 @@ function decisionReport(){
 const stepH = (n, t) => `<h2 style="display:flex;align-items:center;gap:10px"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--bg);font-size:14px">${n}</span>${t}</h2>`;
 views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0).length; return `
   <h1>Comptoir <span class="muted" style="font-size:.6em;font-weight:400">· Routine de session</span></h1>
-  <p class="lede">La session de jeu étape par étape, de la connexion à la déconnexion. Tout ce qui fait le lien entre le jeu et le dashboard est ici.</p>
-  ${state.addonLast ? `<div class="note">Dernier export addon : ${new Date(state.addonLast.t*1000).toLocaleString("fr-FR")}.</div>` : ""}
+  <p class="lede">Routine du jour, dans l'ordre : relevés en jeu → envoi → décisions → retour dans le jeu. Un perso dont le contenu n'a pas changé n'a pas besoin d'être connecté : ses derniers relevés restent dans le dashboard.</p>
 
   <div class="impgrid">
   <div class="impcol">
-  ${stepH(1, "Connexion : relevés en jeu")}
+  ${stepH(1, "Perso banque : relevés")}
   <div class="tw" style="padding:12px 16px"><ul style="margin:0;padding-left:18px;line-height:1.7">
-    <li>Sur chaque perso dont le contenu a changé : se connecter (sacs relevés automatiquement), ouvrir la <b>banque</b>.</li>
-    <li>Perso banque : ouvrir la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés).</li>
-    <li>Main : ouvrir les fenêtres de <b>métier</b> (recettes, couleurs, temps de recharge, niveaux).</li>
+    <li>Se connecter (sacs relevés automatiquement), ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés).</li>
+    <li>Un perso qui n'a rien changé depuis le dernier export reste déconnecté. Un perso avec métiers : ouvrir ses <b>fenêtres de métier</b> (recettes, temps de recharge, niveaux).</li>
     <li>La liste Auctionator <b>« Gringotts - Suivi »</b> est créée par l'addon à la connexion.</li>
   </ul></div>
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Suivi » (${trackList().length} objets)</summary>
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
     <div id="trackOut"></div></details>
 
-  ${stepH(2, "Hôtel des ventes : scan puis envoi")}
-  <p class="muted" style="margin-top:0">Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> (ou <code>/gt sync</code>) et <b>Entrée</b> pour le <code>/reload</code>. Sur le PC, lance <b>Envoyer.bat</b> : l'export part chiffré vers GitHub.</p>
+  ${stepH(2, "Hôtel des ventes : scan puis export")}
+  <p class="muted" style="margin-top:0">Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> dans la fenêtre de l'HV (ou <code>/gt sync</code>), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque.</p>
 
-  ${stepH(3, "Dashboard : synchroniser")}
-  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes et temps de recharge. Il se lance aussi tout seul à l'ouverture. <b>Secours</b> : coller un export <code>/gt export</code> ci-dessous (ou l'export CSV d'une liste Auctionator, prix seuls).</p>
+  ${stepH(3, "Bureau : Envoyer.bat")}
+  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> fait (tu peux être déjà connecté sur un autre perso). L'export part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
+
+  ${stepH(4, "Dashboard : synchroniser")}
+  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes, or et temps de recharge. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
   ${(() => { const c = readSync(); return c.report ? `<details open><summary>Dernier export reçu (synchronisation du ${new Date(c.lastOk).toLocaleString("fr-FR")})</summary>${c.report}</details>` : `<div class="note">Aucun export reçu par synchronisation sur cet appareil.</div>`; })()}
+  <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : coller un export à la main (<code>/gt export</code> ou CSV Auctionator)</summary>
   <textarea id="impText" placeholder="WFC1;…  (export Gringotts)"></textarea>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="impParse">Analyser</button><button class="btn primary" id="impApply" disabled>Enregistrer les prix du ${fmtDate(today())}</button></div>
-  <div id="impOut"></div>
+  <div id="impOut"></div></details>
 
   </div>
   <div class="impcol">
-  ${stepH(4, "Décider")}
-  <p class="muted" style="margin-top:0">Rapport du dernier import, par priorité : cliquez une tuile pour son détail. Les corrections (cibles, stocks) se font dans <a href="#stock">Stock &amp; achats</a> et changent le texte de l'étape 5.</p>
+  ${stepH(5, "Décider")}
+  <p class="muted" style="margin-top:0">Rapport du dernier import, par priorité : cliquez une tuile pour son détail. Les corrections (cibles, stocks) se font dans <a href="#stock">Stock &amp; achats</a> et changent le fichier de l'étape 6.</p>
   ${histNote()}${decisionReport()}
 
-  ${stepH(5, "Envoyer au jeu")}
-  <p class="muted" style="margin-top:0">En jeu : <code>/gt import</code>, coller, « Importer ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créée automatiquement.</p>
-  <div class="toolbar"><button class="btn primary" id="gameBtn">Générer le texte pour le jeu</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit le fichier Dash.lua dans le dossier de l'addon : il suffit ensuite de faire /reload en jeu">→ Envoyer à l'addon (fichier local)</button>` : ""}<button class="btn" id="dashDl" title="Télécharge Dash.lua, à copier dans Interface\\AddOns\\Gringotts (ou lancer Appliquer.bat)">Télécharger Dash.lua</button></div>
-  <div id="gameOut"></div>
+  ${stepH(6, "Renvoyer les décisions au jeu")}
+  <p class="muted" style="margin-top:0">Clique <b>Télécharger Dash.lua</b>, puis lance <b>Appliquer.bat</b> (il copie le fichier dans l'addon). Sur le perso que tu joues : <code>/reload</code>. Le chat affiche « Décisions du dashboard détectées… ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créées automatiquement.</p>
+  <div class="toolbar"><button class="btn primary" id="dashDl" title="Télécharge Dash.lua ; Appliquer.bat le copie dans Interface\\AddOns\\Gringotts">Télécharger Dash.lua</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit Dash.lua directement dans le dossier de l'addon (si le navigateur l'autorise)">→ Envoyer à l'addon (fichier local)</button>` : ""}</div>
+  <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : texte à coller en jeu (<code>/gt import</code>)</summary>
+    <div class="toolbar" style="margin-top:8px"><button class="btn" id="gameBtn">Générer le texte pour le jeu</button></div>
+    <div id="gameOut"></div></details>
 
-  ${stepH(6, "Achats, crafts, ventes")}
+  ${stepH(7, "Achats, crafts, ventes")}
   <p class="muted" style="margin-top:0">Rechercher « Gringotts - Réassort » dans Auctionator (${toBuyN} composant${toBuyN>1?"s":""} à acheter), crafter, mettre en vente.</p>
   <details><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Réassort »</summary>
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="shopBtn"${toBuyN?"":" disabled"}>Générer la liste du réassort (${toBuyN})</button></div>
     <div id="shopOut"></div></details>
 
-  ${stepH(7, "Déconnexion")}
-  <p class="muted" style="margin-top:0">Se déconnecter de chaque perso après ses mouvements de stock : ses relevés sont enregistrés à la déconnexion (ou <code>/reload</code>). La prochaine session repart de l'étape 1.</p>
-
+  
   </div>
   </div>
   <details class="impmore"><summary class="muted" style="cursor:pointer">Historique des imports et remise à zéro</summary>
@@ -1704,7 +1706,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
   <h2>Repartir de zéro</h2>
   ${state.priceReset
     ? `<div class="note ok">Historique remis à zéro : seuls vos imports comptent. Les prix PNJ restent appliqués.</div>
-       <div class="toolbar"><button class="btn" id="seedRestore">Restaurer les données de test</button></div>`
+`
     : `<div class="note warn">Les prix actuels et leur historique sont des données de test. Le jour du lancement, effacez-les pour que marges, médianes et jours recommandés ne reposent que sur vos scans. Les recettes apprises, réglages et prix PNJ sont conservés.</div>
        <div class="toolbar"><label><input type="checkbox" id="rstStock" checked> Remettre aussi tous les stocks à 0</label>
        <button class="btn" id="priceReset" style="color:var(--bad);border-color:var(--bad)">Effacer l'historique des prix</button></div>`}
