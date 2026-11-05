@@ -3,7 +3,7 @@
 Tableau de bord de pilotage des professions pour WoW Forever, alimenté par l'addon **Gringotts**.
 
 - **Dashboard** : `index.html` (GitHub Pages). Un mot de passe déchiffre les données dans ton navigateur.
-- **Addon** : `addon/Gringotts.zip` (v1.10.0), à décompresser dans `Interface\AddOns\`.
+- **Addon** : `addon/Gringotts.zip` (v1.11.0), à décompresser dans `Interface\AddOns\`.
 - **Envoi depuis Windows** : `tools/Installer.bat` (configuration, une fois) puis `tools/Envoyer.bat` (à chaque envoi).
 
 ## Circuit des données
@@ -16,6 +16,12 @@ WoW (scan Auctionator) → /reload → SavedVariables\Gringotts.lua
 
 L'addon ne peut ni écrire de fichier ni joindre Internet : les données n'arrivent sur disque qu'au `/reload` ou à la déconnexion. À la fin d'un scan complet, l'addon propose de recharger l'interface (fenêtre « Recharger »). Sinon : `/gt sync` puis `/reload`.
 
+## Retour vers le jeu (décisions du dashboard)
+
+Bouton **→ Envoyer à l'addon** (menu de gauche, ou Comptoir, étape 5) : le dashboard écrit `Dash.lua` dans `Interface\AddOns\Gringotts` (Chrome ou Edge sur PC, accès au dossier demandé une fois). Au `/reload` suivant, l'addon applique les décisions : composants réservés, infobulles, listes Auctionator, envois entre persos.
+
+Si le navigateur refuse le dossier (WoW dans `Program Files`, par exemple) : bouton **Télécharger Dash.lua** puis double-clic sur `tools/Appliquer.bat`, qui copie le fichier au bon endroit. Le copier-coller via `/gt import` reste possible.
+
 ## Installation
 
 1. **Addon** : remplace le dossier `Gringotts` d'`Interface\AddOns\` par celui de `addon/Gringotts.zip`.
@@ -23,7 +29,7 @@ L'addon ne peut ni écrire de fichier ni joindre Internet : les données n'arriv
    - Resource owner : l'organisation `Zazahkel-Gringotts`.
    - Repository access : *Only select repositories* → `Gringotts`.
    - Permissions → *Contents* : **Read and write**. Rien d'autre.
-3. **Script** : télécharge `tools/Gringotts-Sync.ps1`, `tools/Installer.bat` et `tools/Envoyer.bat` dans le même dossier, puis double-clique `Installer.bat`. Il demande le dossier WoW (détecté si possible), le jeton, et le mot de passe du dashboard, puis fait un premier envoi. Rien ne tourne en arrière-plan.
+3. **Script** : télécharge `tools/Gringotts-Sync.ps1`, `tools/Installer.bat`, `tools/Envoyer.bat` et `tools/Appliquer.bat` dans le même dossier, puis double-clique `Installer.bat`. Il demande le dossier WoW (détecté si possible), le jeton, et le mot de passe du dashboard, puis fait un premier envoi. Rien ne tourne en arrière-plan.
    - À chaque envoi ensuite : scan en jeu, `/reload`, puis double-clique `Envoyer.bat`.
 4. **Dashboard** : ouvre le site, saisis le même mot de passe. Il est retenu sur l'appareil si la case est cochée.
 

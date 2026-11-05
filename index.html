@@ -210,7 +210,7 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
       <li><a href="#reglages" data-view="reglages">Réglages</a></li>
     </ul>
     <p class="freshness" id="fresh"></p>
-    <div class="syncbox"><button class="btn sm" id="syncBtn" type="button">↻ Synchroniser</button><p class="freshness" id="syncSt"></p></div>
+    <div class="syncbox"><button class="btn sm" id="syncBtn" type="button">↻ Synchroniser</button> <button class="btn sm" id="addonBtn" type="button" hidden title="Écrit les décisions dans le dossier de l'addon, puis /reload en jeu">→ Envoyer à l'addon</button><p class="freshness" id="syncSt"></p></div>
     <div class="forever" role="img" aria-label="World of Warcraft Forever"></div>
   </nav>
   <main id="main"></main>
@@ -1675,7 +1675,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
 
   ${stepH(5, "Envoyer au jeu")}
   <p class="muted" style="margin-top:0">En jeu : bouton <b>Import dashboard</b> à l'HV (ou <code>/gt import</code>), coller, « Importer ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créée automatiquement.</p>
-  <div class="toolbar"><button class="btn primary" id="gameBtn">Générer le texte pour le jeu</button></div>
+  <div class="toolbar"><button class="btn primary" id="gameBtn">Générer le texte pour le jeu</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit le fichier Dash.lua dans le dossier de l'addon : il suffit ensuite de faire /reload en jeu">→ Envoyer à l'addon (fichier local)</button>` : ""}<button class="btn" id="dashDl" title="Télécharge Dash.lua, à copier dans Interface\\AddOns\\Gringotts (ou lancer Appliquer.bat)">Télécharger Dash.lua</button></div>
   <div id="gameOut"></div>
 
   ${stepH(6, "Achats, crafts, ventes")}
@@ -1829,6 +1829,8 @@ function bindView(v){
   }
   if (v==="controle") main.querySelectorAll("[data-goto-dec]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); if (b.dataset.gotoDec !== "") decOpen = +b.dataset.gotoDec; location.hash = "#import"; }));
   if (v==="import") {
+    const db1 = document.getElementById("dashBtn"); if (db1) db1.addEventListener("click", sendToAddon);
+    const db2 = document.getElementById("dashDl"); if (db2) db2.addEventListener("click", downloadDash);
     const gb = document.getElementById("gameBtn");
     if (gb) gb.addEventListener("click", () => { const o = document.getElementById("gameOut"); o.innerHTML = gameBox(); const ta = document.getElementById("gameTxt"); ta.value = gameText(); copyFrom(ta);
       o.querySelector("[data-copy]").addEventListener("click", () => copyFrom(ta)); });
@@ -2180,6 +2182,41 @@ function openEnch(name){
     <h2>Composants</h2>${linesTable(e.lines)}`);
 }
 
+// ---------- Envoi des décisions à l'addon : fichier Dash.lua écrit dans Interface\AddOns\Gringotts ----------
+// Chrome/Edge sur PC : l'accès au dossier est demandé une fois puis retenu. Ailleurs : téléchargement du fichier.
+const CAN_FS = typeof window.showDirectoryPicker === "function";
+const idbOpen = () => new Promise((res, rej) => { const r = indexedDB.open("gringotts-fs", 1); r.onupgradeneeded = () => r.result.createObjectStore("h"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function idbGet(k){ const d = await idbOpen(); return new Promise((res, rej) => { const q = d.transaction("h").objectStore("h").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function idbSet(k, v){ const d = await idbOpen(); return new Promise((res, rej) => { const t = d.transaction("h", "readwrite"); t.objectStore("h").put(v, k); t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); }
+function dashLua(text){
+  let n = 0; while (text.includes("]" + "=".repeat(n) + "]")) n++;
+  const eq = "=".repeat(n);
+  return `-- Écrit par le dashboard Gringotts le ${new Date().toLocaleString("fr-FR")}\nlocal ADDON, ns = ...\nns.DASH_TEXT = [${eq}[\n${text}\n]${eq}]\n`;
+}
+async function sendToAddon(){
+  try {
+    let dir = null; try { dir = await idbGet("addonDir"); } catch(e) {}
+    if (dir) { let perm = await dir.queryPermission({mode:"readwrite"}); if (perm !== "granted") perm = await dir.requestPermission({mode:"readwrite"}); if (perm !== "granted") dir = null; }
+    if (!dir) {
+      toast("Choisis le dossier Interface\\AddOns\\Gringotts de WoW");
+      dir = await window.showDirectoryPicker({id:"gringotts-addon", mode:"readwrite"});
+      try { await dir.getFileHandle("Gringotts.toc"); } catch(e) { toast("Ce n'est pas le dossier de l'addon : choisis le dossier « Gringotts » dans AddOns"); return {ok:false, code:"BADDIR"}; }
+      try { await idbSet("addonDir", dir); } catch(e) {}
+    }
+    const fh = await dir.getFileHandle("Dash.lua", {create:true}), w = await fh.createWritable();
+    await w.write(dashLua(gameText())); await w.close();
+    toast("Décisions écrites dans l'addon : tape /reload en jeu"); return {ok:true};
+  } catch(e) {
+    if (e && e.name === "AbortError") return {ok:false, code:"ABORT"};
+    toast("Écriture impossible (" + (e && e.name || "erreur") + ") : utilise « Télécharger Dash.lua »"); return {ok:false, code:"ERR"};
+  }
+}
+function downloadDash(){
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([dashLua(gameText())], {type:"text/plain"})); a.download = "Dash.lua";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Dash.lua téléchargé : copie-le dans AddOns\\Gringotts (ou lance Appliquer.bat), puis /reload");
+}
+
 // ---------- Synchronisation GitHub (données chiffrées par le script Windows) ----------
 // Le repo est public : les fichiers data/*.json sont chiffrés (gzip, AES-256-CBC + HMAC-SHA256, clé PBKDF2-SHA256).
 // Le mot de passe ne quitte jamais l'appareil ; il est retenu en local si la case est cochée.
@@ -2276,6 +2313,7 @@ function showLock(msg){ const el = document.getElementById("lock"); if (!el) ret
 function hideLock(){ const el = document.getElementById("lock"); if (el) el.hidden = true; }
 function initSync(){
   document.getElementById("syncBtn").addEventListener("click", () => syncNow({manual:true}));
+  const ab = document.getElementById("addonBtn"); if (ab) { ab.hidden = !CAN_FS; ab.addEventListener("click", sendToAddon); }
   document.getElementById("lockSkip").addEventListener("click", e => { e.preventDefault(); sessSet(SYNC_LS+"-skip", "1"); hideLock(); });
   document.getElementById("lockForm").addEventListener("submit", async e => {
     e.preventDefault(); const pw = document.getElementById("lockPw").value; if (!pw) return;

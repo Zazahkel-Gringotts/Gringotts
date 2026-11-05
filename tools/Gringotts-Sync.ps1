@@ -4,6 +4,7 @@
   Usage (via Installer.bat) :
     -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe), puis premier envoi
     -Once      un envoi immédiat (Envoyer.bat) : lit le fichier de l'addon, chiffre, envoie
+    -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
     -OutDir X  écrit les fichiers chiffrés dans X au lieu de les envoyer (test hors ligne)
 
@@ -13,6 +14,7 @@ param(
   [switch]$Setup,
   [switch]$Watch,
   [switch]$Once,
+  [switch]$Apply,
   [string]$OutDir = "",
   [string]$File = ""
 )
@@ -279,6 +281,24 @@ function Run-Setup {
   Write-Host "Journal : $LogPath"
 }
 
+# ---------- Application manuelle de Dash.lua (si le navigateur ne peut pas écrire dans le dossier de l'addon) ----------
+function Run-Apply {
+  if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
+  $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
+  $i = $cfg.sv.IndexOf("\WTF\", [StringComparison]::OrdinalIgnoreCase)
+  if ($i -lt 0) { throw "Chemin SavedVariables inattendu : $($cfg.sv)" }
+  $addon = Join-Path $cfg.sv.Substring(0, $i) "Interface\AddOns\Gringotts"
+  if (-not (Test-Path (Join-Path $addon "Gringotts.toc"))) { throw "Dossier de l'addon introuvable : $addon" }
+  $dl = $null
+  try { $dl = (New-Object -ComObject Shell.Application).NameSpace("shell:Downloads").Self.Path } catch {}
+  if (-not $dl) { $dl = Join-Path $env:USERPROFILE "Downloads" }
+  $f = Get-ChildItem -Path $dl -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  if (-not $f) { throw "Aucun Dash.lua dans $dl : clique d'abord sur « Télécharger Dash.lua » dans le dashboard." }
+  Copy-Item -Path $f.FullName -Destination (Join-Path $addon "Dash.lua") -Force
+  Get-ChildItem -Path $dl -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+  Log ("Dash.lua copié dans {0}. Tape /reload en jeu." -f $addon)
+}
+
 # ---------- Boucle de surveillance ----------
 function Run-Watch {
   $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
@@ -305,6 +325,7 @@ function Run-Watch {
 }
 
 if ($Setup) { Run-Setup; return }
+if ($Apply) { Run-Apply; return }
 if ($Watch) { Run-Watch; return }
 if ($Once -or $OutDir -or (-not $Watch)) {
   $cfg = if (Test-Path $CfgPath) { Get-Content $CfgPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ sv = $File; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" } }
