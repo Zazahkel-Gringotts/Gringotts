@@ -3,7 +3,7 @@
 Tableau de bord de pilotage des professions pour WoW Forever, alimenté par l'addon **Gringotts**.
 
 - **Dashboard** : `index.html` (GitHub Pages). Un mot de passe déchiffre les données dans ton navigateur.
-- **Addon** : `addon/Gringotts.zip` (v1.11.0), à décompresser dans `Interface\AddOns\`.
+- **Addon** : `addon/Gringotts.zip` (v1.12.0), à décompresser dans `Interface\AddOns\`.
 - **Envoi depuis Windows** : `tools/Installer.bat` (configuration, une fois) puis `tools/Envoyer.bat` (à chaque envoi).
 
 ## Circuit des données
@@ -14,7 +14,7 @@ WoW (scan Auctionator) → /reload → SavedVariables\Gringotts.lua
    → dashboard (PC ou mobile) : bouton « Synchroniser », déchiffrement dans le navigateur
 ```
 
-L'addon ne peut ni écrire de fichier ni joindre Internet : les données n'arrivent sur disque qu'au `/reload` ou à la déconnexion. À la fin d'un scan complet, l'addon propose de recharger l'interface (fenêtre « Recharger »). Sinon : `/gt sync` puis `/reload`.
+L'addon ne peut ni écrire de fichier ni joindre Internet : les données n'arrivent sur disque qu'au `/reload` ou à la déconnexion. À l'Hôtel des ventes, le bouton **Sync Gringotts** (ou `/gt sync`) prépare l'export puis recharge l'interface. À la fin d'un scan complet, l'addon peut aussi proposer ce rechargement (fenêtre « Recharger »).
 
 ## Retour vers le jeu (décisions du dashboard)
 

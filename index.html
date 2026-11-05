@@ -1518,7 +1518,7 @@ function gameText(){
   return L.join("\n");
 }
 function gameBox(){
-  return `<div class="note"><p style="margin:0 0 8px">En jeu : <code>/gt import</code> (ou bouton « Import dashboard » à l'HV), collez ce texte, puis « Importer ». Contenu : composants réservés (contour rouge), cibles et achats, prix d'achat max, marges et prix plancher (infobulle), envois entre persos, liste Auctionator « Gringotts - Réassort ».</p>
+  return `<div class="note"><p style="margin:0 0 8px">En jeu : <code>/gt import</code>, collez ce texte, puis « Importer ». Contenu : composants réservés (contour rouge), cibles et achats, prix d'achat max, marges et prix plancher (infobulle), envois entre persos, liste Auctionator « Gringotts - Réassort ».</p>
     <div class="copybox"><textarea id="gameTxt" readonly></textarea><button class="btn" data-copy="gameTxt">Copier</button></div></div>`;
 }
 let pending = null, pendingAddon = null;
@@ -1674,7 +1674,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
   ${histNote()}${decisionReport()}
 
   ${stepH(5, "Envoyer au jeu")}
-  <p class="muted" style="margin-top:0">En jeu : bouton <b>Import dashboard</b> à l'HV (ou <code>/gt import</code>), coller, « Importer ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créée automatiquement.</p>
+  <p class="muted" style="margin-top:0">En jeu : <code>/gt import</code>, coller, « Importer ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créée automatiquement.</p>
   <div class="toolbar"><button class="btn primary" id="gameBtn">Générer le texte pour le jeu</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit le fichier Dash.lua dans le dossier de l'addon : il suffit ensuite de faire /reload en jeu">→ Envoyer à l'addon (fichier local)</button>` : ""}<button class="btn" id="dashDl" title="Télécharge Dash.lua, à copier dans Interface\\AddOns\\Gringotts (ou lancer Appliquer.bat)">Télécharger Dash.lua</button></div>
   <div id="gameOut"></div>
 
