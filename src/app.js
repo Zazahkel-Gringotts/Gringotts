@@ -1423,6 +1423,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
 
   ${stepH(3, "Dashboard : synchroniser")}
   <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes et temps de recharge. Il se lance aussi tout seul à l'ouverture. <b>Secours</b> : coller un export <code>/gt export</code> ci-dessous (ou l'export CSV d'une liste Auctionator, prix seuls).</p>
+  ${(() => { const c = readSync(); return c.report ? `<details open><summary>Dernier export reçu (synchronisation du ${new Date(c.lastOk).toLocaleString("fr-FR")})</summary>${c.report}</details>` : `<div class="note">Aucun export reçu par synchronisation sur cet appareil.</div>`; })()}
   <textarea id="impText" placeholder="WFC1;…  (export Gringotts)"></textarea>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="impParse">Analyser</button><button class="btn primary" id="impApply" disabled>Enregistrer les prix du ${fmtDate(today())}</button></div>
   <div id="impOut"></div>
@@ -1990,7 +1991,7 @@ const syncPass = () => readSync().pass || sessGet(SYNC_LS+"-pass");
 const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const localDay = t => { const d = new Date(t*1000); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 const syncErr = (code, msg) => Object.assign(new Error(msg || code), {code});
-let syncKeys = null, syncBusy = false;
+let syncKeys = null, syncBusy = false, syncReportHtml = "";
 
 async function ghGet(path){                        // API « contents » en brut : toujours à jour (pas de cache CDN)
   const r = await fetch(`https://api.github.com/repos/${GH.repo}/contents/${path}?ref=${GH.branch}`, {headers:{Accept:"application/vnd.github.raw+json"}, cache:"no-store"});
@@ -2045,7 +2046,7 @@ async function syncNow(opts = {}){
       meta = m2; syncKeys = null; await open(); text = await decryptFile(lt, syncKeys);
     }
     const ao = parseAddon(text); if (!ao) throw syncErr("FORMAT");
-    const dateKey = localDay(ao.exported); let changed = false;
+    const dateKey = localDay(ao.exported); let changed = false; syncReportHtml = addonReport(addonPlan(ao));
     if (!(state.addonLast && state.addonLast.t >= ao.exported)) {
       const plan = addonPlan(ao); plan.dateKey = dateKey;
       applyAddon(plan); compactImports(); rebuild();
@@ -2059,7 +2060,7 @@ async function syncNow(opts = {}){
       try { const tx = await siteGet(`data/p-${d}.json`); if (!tx) return;
         const pa = parseAddon(await decryptFile(tx, syncKeys)); if (pa && Object.keys(pa.prices).length) { state.imports[d] = pa.prices; changed = true; } } catch(e) {} }));
     if (changed) { compactImports(); rebuild(); persist(); render(); }
-    writeSync({...readSync(), meta, lastOk: Date.now(), exp: ao.exported});
+    writeSync({...readSync(), meta, lastOk: Date.now(), exp: ao.exported, ...(syncReportHtml ? {report: syncReportHtml} : {})});
     refreshSyncSt(); if (opts.manual) toast(changed ? "Synchronisé : données mises à jour" : "Déjà à jour");
     return {ok:true, changed};
   } catch(e) {
