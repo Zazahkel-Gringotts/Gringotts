@@ -230,7 +230,7 @@ function Sync-Once($cfg, $token, [string]$pass) {
 # ---------- Configuration guidée ----------
 function Run-Setup {
   Write-Host ""
-  Write-Host "=== Gringotts-Sync : configuration ===" -ForegroundColor Yellow
+  Write-Host "=== Gringotts-Sync v1.11.3 : configuration ===" -ForegroundColor Yellow
   $cfg = [pscustomobject]@{ sv = ""; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" }
 
   # 1. Dossier WoW
@@ -254,10 +254,17 @@ function Run-Setup {
   Write-Host ""
   Write-Host "Jeton GitHub (fine-grained) limité au repo Gringotts, permission Contents : Read and write."
   $tok = Read-Host "Colle le jeton (rien ne s'affiche)" -AsSecureString
-  Save-Secret $TokPath $tok
-  $token = Read-Secret $TokPath
+  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($tok)
+  $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr); [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+  $token = ($plain -replace "[^\x21-\x7E]", "")
+  Write-Host ("Jeton lu : {0} caractères (début : {1})" -f $token.Length, $token.Substring(0, [Math]::Min(11, $token.Length)))
+  if ($token.Length -lt 20) { throw "Jeton vide ou trop court. Relance, puis colle le jeton complet (clic droit ou Ctrl+V)." }
+  Save-Secret $TokPath (ConvertTo-SecureString $token -AsPlainText -Force)
   try { Invoke-RestMethod -Uri ("https://api.github.com/repos/{0}" -f $cfg.repo) -Headers (Gh-Headers $token) | Out-Null; Write-Host "Accès GitHub OK." -ForegroundColor Green }
-  catch { throw "Accès refusé au repo $($cfg.repo) avec ce jeton : $($_.Exception.Message)" }
+  catch {
+    $code = ""; if ($_.Exception.Response) { $code = " (HTTP " + [int]$_.Exception.Response.StatusCode + ")" }
+    throw ("Échec de l'accès au repo {0}{1} : [{2}] {3}" -f $cfg.repo, $code, $_.Exception.GetType().Name, $_.Exception.Message)
+  }
 
   # 3. Mot de passe de chiffrement
   Write-Host ""
