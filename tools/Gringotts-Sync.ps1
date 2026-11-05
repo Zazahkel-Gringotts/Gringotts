@@ -2,9 +2,9 @@
   Gringotts-Sync : envoie les données de l'addon Gringotts vers le repo GitHub, chiffrées.
 
   Usage (via Installer.bat) :
-    -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe) + démarrage automatique
-    -Watch     surveille SavedVariables\Gringotts.lua et envoie à chaque /reload (mode par défaut)
-    -Once      un seul envoi immédiat
+    -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe), puis premier envoi
+    -Once      un envoi immédiat (Envoyer.bat) : lit le fichier de l'addon, chiffre, envoie
+    -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
     -OutDir X  écrit les fichiers chiffrés dans X au lieu de les envoyer (test hors ligne)
 
   Compatible Windows PowerShell 5.1 (aucune installation requise).
@@ -177,6 +177,8 @@ function Sync-Once($cfg, $token, [string]$pass) {
   if ($lines[0] -notmatch "^WFC1;(\d+);") { Log "Export illisible (en-tête WFC1 absent)."; return $false }
   $t = [int64]$Matches[1]
   $day = [DateTimeOffset]::FromUnixTimeSeconds($t).LocalDateTime.ToString("yyyy-MM-dd")
+  $ageMin = [int](([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $t) / 60)
+  if ($ageMin -gt 60) { Log ("Attention : l'export date d'il y a {0} h {1} min. As-tu fait /gt sync puis /reload (ou le bouton Recharger) après ton scan ?" -f [math]::Floor($ageMin / 60), ($ageMin % 60)) }
 
   # Rien de nouveau ? (hors horodatage de la 1re ligne)
   $body = ($lines | Select-Object -Skip 1) -join "`n"
@@ -268,25 +270,13 @@ function Run-Setup {
   $cfg | ConvertTo-Json | Set-Content -Path $CfgPath -Encoding UTF8
   if (Test-Path $StPath) { Remove-Item $StPath -Force }
 
-  # 4. Démarrage automatique (dossier Démarrage de l'utilisateur, aucun droit admin)
-  $dest = Join-Path $Home2 "Gringotts-Sync.ps1"
-  if ($PSCommandPath -and ($PSCommandPath -ne $dest)) { Copy-Item -Path $PSCommandPath -Destination $dest -Force }
-  $startup = [Environment]::GetFolderPath("Startup")
-  $lnk = Join-Path $startup "Gringotts-Sync.lnk"
-  $ws = New-Object -ComObject WScript.Shell
-  $sc = $ws.CreateShortcut($lnk)
-  $sc.TargetPath = "powershell.exe"
-  $sc.Arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $dest + '" -Watch'
-  $sc.WindowStyle = 7
-  $sc.Save()
-  Write-Host "Démarrage automatique installé : $lnk" -ForegroundColor Green
-
   Write-Host ""
   Write-Host "Premier envoi..." -ForegroundColor Yellow
   $cfg2 = Get-Content $CfgPath -Raw | ConvertFrom-Json
   try { [void](Sync-Once $cfg2 $token $b1) } catch { Log ("Erreur : " + $_.Exception.Message) }
-  Start-Process -FilePath "powershell.exe" -ArgumentList ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $dest + '" -Watch') | Out-Null
-  Write-Host "La surveillance tourne en arrière-plan. Journal : $LogPath" -ForegroundColor Green
+  Write-Host ""
+  Write-Host "Configuration terminée. Pour envoyer tes données ensuite : double-clique Envoyer.bat (après un /reload en jeu)." -ForegroundColor Green
+  Write-Host "Journal : $LogPath"
 }
 
 # ---------- Boucle de surveillance ----------
@@ -315,7 +305,8 @@ function Run-Watch {
 }
 
 if ($Setup) { Run-Setup; return }
-if ($Once -or $OutDir) {
+if ($Watch) { Run-Watch; return }
+if ($Once -or $OutDir -or (-not $Watch)) {
   $cfg = if (Test-Path $CfgPath) { Get-Content $CfgPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ sv = $File; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" } }
   $token = Read-Secret $TokPath; $pass = Read-Secret $PwdPath
   if ($env:GT_PASS) { $pass = $env:GT_PASS }
@@ -323,4 +314,3 @@ if ($Once -or $OutDir) {
   [void](Sync-Once $cfg $token $pass)
   return
 }
-Run-Watch

@@ -4,13 +4,13 @@ Tableau de bord de pilotage des professions pour WoW Forever, alimenté par l'ad
 
 - **Dashboard** : `index.html` (GitHub Pages). Un mot de passe déchiffre les données dans ton navigateur.
 - **Addon** : `addon/Gringotts.zip` (v1.10.0), à décompresser dans `Interface\AddOns\`.
-- **Synchro Windows** : `tools/Installer.bat` (script `Gringotts-Sync.ps1`).
+- **Envoi depuis Windows** : `tools/Installer.bat` (configuration, une fois) puis `tools/Envoyer.bat` (à chaque envoi).
 
 ## Circuit des données
 
 ```
 WoW (scan Auctionator) → /reload → SavedVariables\Gringotts.lua
-   → Gringotts-Sync (PC, en arrière-plan) : chiffre, puis envoie vers data/*.json
+   → tu lances Envoyer.bat : chiffre, puis envoie vers data/*.json
    → dashboard (PC ou mobile) : bouton « Synchroniser », déchiffrement dans le navigateur
 ```
 
@@ -23,7 +23,8 @@ L'addon ne peut ni écrire de fichier ni joindre Internet : les données n'arriv
    - Resource owner : l'organisation `Zazahkel-Gringotts`.
    - Repository access : *Only select repositories* → `Gringotts`.
    - Permissions → *Contents* : **Read and write**. Rien d'autre.
-3. **Script** : télécharge `tools/Gringotts-Sync.ps1` et `tools/Installer.bat` dans le même dossier, puis double-clique `Installer.bat`. Il demande le dossier WoW (détecté si possible), le jeton, et le mot de passe du dashboard. Il s'installe au démarrage de Windows.
+3. **Script** : télécharge `tools/Gringotts-Sync.ps1`, `tools/Installer.bat` et `tools/Envoyer.bat` dans le même dossier, puis double-clique `Installer.bat`. Il demande le dossier WoW (détecté si possible), le jeton, et le mot de passe du dashboard, puis fait un premier envoi. Rien ne tourne en arrière-plan.
+   - À chaque envoi ensuite : scan en jeu, `/reload`, puis double-clique `Envoyer.bat`.
 4. **Dashboard** : ouvre le site, saisis le même mot de passe. Il est retenu sur l'appareil si la case est cochée.
 
 ## Sécurité : ce que le repo public expose
