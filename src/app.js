@@ -111,6 +111,8 @@ function compactImports(){
   return changed;
 }
 try { const raw = localStorage.getItem(LS_KEY); if (raw) { const s = parseStored(raw); state = {...state, ...s, settings:{...DEFAULT_SETTINGS, ...(s.settings||{})}}; } } catch(e) {}
+// Un export addon déjà reçu = données réelles : l'historique de test ne doit plus compter (migration des états existants)
+if (state.addonLast || state.priceAge) state.priceReset = true;
 
 let dirtyImports = new Set();
 let storageFail = null;            // erreur d'écriture du stockage local (quota navigateur), affichée en haut de page
