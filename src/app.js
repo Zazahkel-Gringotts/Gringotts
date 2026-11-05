@@ -767,7 +767,7 @@ views.controle = () => {
   <h2>Priorités</h2>
   ${prio.length ? `<div class="prios">${prio.map(t => `<div class="tw prio"><div class="prh"><span class="st ${t.prio}">${t.n}</span><b>${t.title}</b></div><div class="prs">${t.sum}</div><div><button class="btn" data-goto-dec="${t.i}">Détail au Comptoir →</button></div></div>`).join("")}</div>`
     : `<div class="tw empty">Rien d'urgent : aucune action en attente.</div>`}
-  <p class="muted" style="margin:8px 0 0">Toutes les décisions : <a href="#import" data-goto-dec="">Comptoir, étape 4</a>.${flagged.length ? ` ${flagged.length} craft${flagged.length>1?"s ont":" a"} une alerte de données (⚠) : <a href="#crafts">Crafts</a>.` : ""}</p>
+  <p class="muted" style="margin:8px 0 0">Toutes les décisions : <a href="#import" data-goto-dec="">Comptoir, étape 5</a>.${flagged.length ? ` ${flagged.length} craft${flagged.length>1?"s ont":" a"} une alerte de données (⚠) : <a href="#crafts">Crafts</a>.` : ""}</p>
   <div class="cols">
     <section><h2>Top 5 crafts — bénéfice net par craft</h2>
       ${top.length ? `<div class="tw" style="padding:14px 16px 6px">${top.map(c => `
@@ -1308,8 +1308,8 @@ function logistics(){
   }));
   return {moves, short, ok:true};
 }
-// ---------- Rapport de décisions (étape 4 de la session) ----------
-let decOpen = null;   // tuile de décision ouverte (étape 4)
+// ---------- Rapport de décisions (étape 5 de la session) ----------
+let decOpen = null;   // tuile de décision ouverte (étape 5)
 // Composants des recettes rentables dont le prix s'écarte de la médiane 30 j d'au moins le seuil du signal d'achat
 function priceWatch(){
   const used = new Set(); M.crafts.filter(c => c.learned && c.st==="ok").forEach(c => c.lines.forEach(l => used.add(norm(l.n))));
@@ -1365,9 +1365,9 @@ function decisionBlocks(){
   ${(() => { const LG = logistics(); return sec("info", "Envois entre persos", LG.moves.length,
      !LG.ok ? `<span class="muted">Stock par perso inconnu : il faut l'addon ${MIN_ADDON} ou plus.</span>` :
      tbl(["De","À","Objet",">Qté"], LG.moves.map(m => `<tr><td>${esc(m.from)}</td><td>${esc(m.to)}</td><td>${esc(m.n)}</td><td class="r">${m.q}</td></tr>`)) +
-     `<p class="muted" style="margin:6px 0 0">Composants nécessaires au perso qui craft (crafts à produire + étape de montée en cours). Après l'étape 5 : bouton « Gringotts : préparer l'envoi » à la boîte aux lettres du perso expéditeur ; rappel des retraits à l'ouverture de la banque de guilde.${LG.short.length ? ` Manquants partout (à acheter) : ${LG.short.slice(0,8).map(x => `${esc(x.n)} ×${x.q}`).join(", ")}.` : ""}</p>`); })()}
+     `<p class="muted" style="margin:6px 0 0">Composants nécessaires au perso qui craft (crafts à produire + étape de montée en cours). Après l'étape 6 : bouton « Gringotts : préparer l'envoi » à la boîte aux lettres du perso expéditeur ; rappel des retraits à l'ouverture de la banque de guilde.${LG.short.length ? ` Manquants partout (à acheter) : ${LG.short.slice(0,8).map(x => `${esc(x.n)} ×${x.q}`).join(", ")}.` : ""}</p>`); })()}
   ${sec("info", "Acheter", buy.length + opp.filter(c => !c.toBuy).length,
-     (buy.length ? `<p style="margin:0 0 4px">Réassort : <b>${buy.length}</b> composants pour <b>${money(refill)}</b> (liste « Gringotts - Réassort » après l'étape 5).${dear.length ? ` <span class="st warn">${dear.length} trop cher(s) : à reporter</span>` : ""}</p>` +
+     (buy.length ? `<p style="margin:0 0 4px">Réassort : <b>${buy.length}</b> composants pour <b>${money(refill)}</b> (liste « Gringotts - Réassort » après l'étape 6).${dear.length ? ` <span class="st warn">${dear.length} trop cher(s) : à reporter</span>` : ""}</p>` +
        tbl(["Composant",">Qté",">Prix actuel","Signal",">Coût"], buy.slice(0,10).map(c => `<tr><td>${esc(c.n)}${c.res ? ` <span class="muted">· montée</span>` : ""}</td><td class="r">${c.toBuy}</td><td class="r">${money(c.cur)}</td><td>${stPill(c.sig,c.sigTxt)}</td><td class="r">${money(c.refill)}</td></tr>`)) : "") +
      (opp.length ? `<p style="margin:10px 0 4px"><b>Opportunités</b> (≥ ${pct(S.buyTh)} sous la médiane 30 j) : acheter au-delà de la cible si la place le permet.</p><p class="muted" style="margin:0">${opp.slice(0,10).map(c => `${esc(c.n)} ${pct(c.delta)}`).join(", ")}</p>` : ""), "stock")}
   ${(() => { const W = priceWatch(); return sec("info", "Prix à surveiller", W.rows.length,
@@ -1461,7 +1461,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
   <h2>Historique des imports</h2>
   ${Object.keys(state.imports).length ? `<div class="tw"><table><thead><tr><th>Date</th><th class="r">Articles</th><th></th></tr></thead><tbody>
   ${Object.keys(state.imports).sort().reverse().map(d=>`<tr><td>${fmtDate(d)}${(state.compacted||{})[d] ? ` <span class="st mute" title="Médiane des relevés de la semaine de reset (historique ancien regroupé)">semaine</span>` : ""}</td><td class="r">${Object.keys(state.imports[d]).length}</td><td class="r"><button class="btn" data-delimp="${d}">Supprimer</button></td></tr>`).join("")}
-  </tbody></table></div>` : `<div class="tw empty">${state.priceReset ? "Aucun prix enregistré. Collez votre premier export à l'étape 3." : `Aucun import pour l'instant : les prix affichés sont les données de test du classeur (${SEED.dates.length} jours, jusqu'au ${fmtDate(SEED.dates[SEED.dates.length-1])}).`}</div>`}
+  </tbody></table></div>` : `<div class="tw empty">${state.priceReset ? "Aucun prix enregistré. Collez votre premier export à l'étape 4 (secours)." : `Aucun import pour l'instant : les prix affichés sont les données de test du classeur (${SEED.dates.length} jours, jusqu'au ${fmtDate(SEED.dates[SEED.dates.length-1])}).`}</div>`}
   <h2>Repartir de zéro</h2>
   ${state.priceReset
     ? `<div class="note ok">Historique remis à zéro : seuls vos imports comptent. Les prix PNJ restent appliqués.</div>
