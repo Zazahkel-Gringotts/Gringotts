@@ -1707,6 +1707,8 @@ function applyAddon(plan){
   state.ext = state.ext || {recipes:{}};
   Object.keys(state.ext.recipes).forEach(k => { if (xJobs.has(state.ext.recipes[k].job)) delete state.ext.recipes[k]; });
   Object.assign(state.ext.recipes, ext); invalidateAll();
+  // Un export réel remplace définitivement les données de test : plus d'historique fictif (médiane 30 j, stocks de départ)
+  state.priceReset = true;
   if (Object.keys(o.prices).length) { state.imports[d] = {...(state.imports[d]||{}), ...o.prices}; dirtyImports.add(d); }
   // Stock = total exporté ; un objet suivi absent de l'export vaut 0
   ALL_HV().forEach(x => { const k = norm(x.n); state.stock[k] = o.stock[k] || 0; });
