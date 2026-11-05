@@ -128,7 +128,7 @@ function Read-Secret([string]$path) {
 }
 
 # ---------- GitHub (API Contents) ----------
-function Gh-Headers([string]$token) { return @{ Authorization = "Bearer $token"; "User-Agent" = "Gringotts-Sync"; Accept = "application/vnd.github+json" } }
+function Gh-Headers([string]$token) { $token = ($token -replace "[^\x21-\x7E]", ""); return @{ Authorization = "Bearer $token"; "User-Agent" = "Gringotts-Sync"; Accept = "application/vnd.github+json" } }
 function Gh-GetSha($cfg, [string]$token, [string]$path) {
   try {
     $r = Invoke-RestMethod -Method Get -Uri ("https://api.github.com/repos/{0}/contents/{1}?ref={2}" -f $cfg.repo, $path, $cfg.branch) -Headers (Gh-Headers $token)
