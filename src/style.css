@@ -68,6 +68,7 @@ td.r,th.r{text-align:right}
 tbody tr.click{cursor:pointer}
 tbody tr.click:hover td{background:var(--panel2)}
 .st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.nodot{display:inline-block;width:.6em;height:.6em;border-radius:50%;background:var(--bad);margin-right:6px;vertical-align:middle}
 .st.ok{background:var(--okbg);color:var(--ok)}.st.warn{background:var(--warnbg);color:var(--warn)}.st.bad{background:var(--badbg);color:var(--bad)}.st.mute{background:var(--panel2);color:var(--muted)}
 .bar{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:4px 12px;align-items:center}
 .bar .track{grid-column:1/-1;height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-bottom:8px}
