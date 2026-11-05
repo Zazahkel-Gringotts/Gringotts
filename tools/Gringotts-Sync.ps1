@@ -1,4 +1,4 @@
-<#
+﻿<#
   Gringotts-Sync : envoie les données de l'addon Gringotts vers le repo GitHub, chiffrées.
 
   Usage (via Installer.bat) :
@@ -122,7 +122,7 @@ function Protect-Bytes([byte[]]$plain, $keys) {
 function Save-Secret([string]$path, [System.Security.SecureString]$s) { ConvertFrom-SecureString $s | Set-Content -Path $path -Encoding ASCII }
 function Read-Secret([string]$path) {
   if (-not (Test-Path $path)) { return $null }
-  $s = Get-Content $path -Raw | ConvertTo-SecureString
+  $s = (Get-Content $path -Raw).Trim() | ConvertTo-SecureString
   $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)
   try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }
 }
