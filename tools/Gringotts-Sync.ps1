@@ -374,7 +374,7 @@ $IdsPath     = Join-Path $Home2 "ids.json"
 $ApiIdPath   = Join-Path $Home2 "apiid.dat"
 $ApiSecPath  = Join-Path $Home2 "apisec.dat"
 $ApiLastPath = Join-Path $Home2 "api-last.txt"
-$MissPath    = Join-Path $Home2 "ids-introuvables.json"
+$MissPath    = Join-Path $Home2 "ids-introuvables2.json"
 $ItemsLogPath = Join-Path $Home2 "items-last.txt"
 
 function Run-Prices {
@@ -433,26 +433,28 @@ function Run-Prices {
     $rlog.Add(("Objets sans identifiant : {0} ; à rechercher : {1}" -f $unres.Count, $todo.Count))
     if ($todo.Count -gt 0) {
       Write-Host ("Recherche des identifiants de {0} objets (première fois seulement)..." -f $todo.Count)
-      $found = 0; $errs = 0; $okq = 0; $first = ""
+      $found = 0; $errs = 0; $okq = 0; $first = ""; $mlog = New-Object System.Collections.Generic.List[string]
       $hdr = @{Authorization = "Bearer $($tok.access_token)"}
       foreach ($nm in $todo) {
-        $uri = "https://eu.api.blizzard.com/data/wow/search/item?namespace=static-forever-eu&locale=fr_FR&orderby=id&_pageSize=20&name.fr_FR=" + [Uri]::EscapeDataString($nm)
+        $uri = "https://eu.api.blizzard.com/data/wow/search/item?namespace=static-forever-eu&locale=fr_FR&orderby=id&_pageSize=1000&name.fr_FR=" + [Uri]::EscapeDataString($nm)
         try {
           $r = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers $hdr
           $okq++
           $js = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()) | ConvertFrom-Json
-          $cands = @($js.results | Where-Object { $_.data.name.fr_FR -eq $nm } | ForEach-Object { [int]$_.data.id })
+          $nn = $nm.Replace([string][char]0x2019, "'")
+          $cands = @($js.results | Where-Object { ([string]$_.data.name.fr_FR).Replace([string][char]0x2019, "'") -eq $nn } | ForEach-Object { [int]$_.data.id })
           if ($cands.Count -gt 0) {
             $inAh = @($cands | Where-Object { $min.ContainsKey($_) })
             $ids[$nm] = if ($inAh.Count -gt 0) { ($inAh | Sort-Object | Select-Object -First 1) } else { ($cands | Sort-Object | Select-Object -First 1) }
             $found++
-          } else { $miss[$nm] = $now }
+          } else { $miss[$nm] = $now; if ($mlog.Count -lt 12) { $mlog.Add(("  introuvable : {0} -> {1} résultat(s) : {2}" -f $nm, @($js.results).Count, ((@($js.results) | Select-Object -First 3 | ForEach-Object { $_.data.name.fr_FR }) -join " | "))) } }
         } catch {
           $errs++; if (-not $first) { $first = $_.Exception.Message }
           if ($errs -ge 3 -and $okq -eq 0) { $rlog.Add("Recherche indisponible, abandon : $first"); break }
         }
       }
       $rlog.Add(("Recherche : {0} identifiants trouvés, {1} requêtes réussies, {2} erreurs. {3}" -f $found, $okq, $errs, $first))
+      foreach ($ml in $mlog) { $rlog.Add($ml) }
       $o2 = [ordered]@{}; foreach ($k in ($ids.Keys | Sort-Object)) { $o2[$k] = $ids[$k] }
       $o2 | ConvertTo-Json | Set-Content -Path $IdsPath -Encoding UTF8
       $m2 = [ordered]@{}; foreach ($k in ($miss.Keys | Sort-Object)) { $m2[$k] = $miss[$k] }
@@ -484,7 +486,7 @@ function Run-Prices {
     Gh-Put $cfg $token "data/index.json" ('{{"t":{0},"days":[{1}]}}' -f $t, (($days | ForEach-Object { '"' + $_ + '"' }) -join ",")) "index"
   }
   Log ("Prix API envoyés : {0} prix (HV {1}) sur {2} objets connus." -f $pl.Count, $ah, $ids.Count)
-  if ($rlog.Count -gt 0) { Log ($rlog[-1]) }
+  if ($rlog.Count -gt 0) { Log (($rlog | Where-Object { $_ -like "Recherche*" } | Select-Object -Last 1)) }
 }
 
 # ---------- Boucle de surveillance ----------
