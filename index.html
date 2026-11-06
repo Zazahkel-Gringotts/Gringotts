@@ -354,6 +354,12 @@ function compactImports(){
 try { const raw = localStorage.getItem(LS_KEY); if (raw) { const s = parseStored(raw); state = {...state, ...s, settings:{...DEFAULT_SETTINGS, ...(s.settings||{})}}; } } catch(e) {}
 // Un export addon déjà reçu = données réelles : l'historique de test ne doit plus compter (migration des états existants)
 if (state.addonLast || state.priceAge) state.priceReset = true;
+// Relevés d'or à 0 isolés (bug de lecture à la connexion/déconnexion) : un 0 encadré par des jours positifs est faux
+function cleanGold(G){
+  Object.keys(G||{}).forEach(w => { const ds = Object.keys(G[w]).sort();
+    ds.forEach((d, i) => { if (G[w][d] === 0 && ds.slice(0,i).some(x => G[w][x] > 0) && ds.slice(i+1).some(x => G[w][x] > 0)) delete G[w][d]; }); });
+}
+if (state.gold) cleanGold(state.gold);
 
 let dirtyImports = new Set();
 let storageFail = null;            // erreur d'écriture du stockage local (quota navigateur), affichée en haut de page
@@ -2015,6 +2021,7 @@ function applyAddon(plan){
   // Or par jour et par perso : fusion (l'addon renvoie jusqu'à 180 jours)
   state.gold = state.gold || {};
   Object.entries(o.gold).forEach(([who, days]) => { state.gold[who] = {...(state.gold[who]||{}), ...days}; });
+  cleanGold(state.gold);
   state.addonVersion = o.version;
   // Prix marchands PNJ relevés (achat) et prix de revente au marchand
   if (Object.keys(o.vendor).length) state.vendor = {...(state.vendor||{}), ...o.vendor};
