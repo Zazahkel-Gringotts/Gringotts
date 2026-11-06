@@ -13,7 +13,7 @@ $tok = Invoke-RestMethod -Method Post -Uri 'https://oauth.battle.net/token' -Bod
   -Headers @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${id}:$secPlain"))}
 $secPlain = $null
 function Get-Api($path) {
-  $url = "https://$Region.api.blizzard.com$path?namespace=$Ns&locale=fr_FR"
+  $url = "https://${Region}.api.blizzard.com${path}?namespace=${Ns}&locale=fr_FR"
   try { return (Invoke-WebRequest -UseBasicParsing -Uri $url -Headers @{Authorization = "Bearer $($tok.access_token)"}).Content } catch { return $null }
 }
 $items = [ordered]@{ 2840='Barre de cuivre'; 2589='Toile de lin'; 2592='Toile de laine'; 4306='Toile de soie'; 2770='Minerai de cuivre'; 2771='Minerai d etain'; 2447='Pacifique'; 765='Feuillargent'; 2318='Cuir leger'; 2835='Pierre brute' }
