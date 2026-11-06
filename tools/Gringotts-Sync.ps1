@@ -4,6 +4,7 @@
   Usage (via Installer.bat) :
     -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe), puis premier envoi
     -Once      un envoi immédiat (Envoyer.bat) : lit le fichier de l'addon, chiffre, envoie
+    -Compare   compare les prix de ton dernier export aux HV de l'API Blizzard (identifie ton HV)
     -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
     -OutDir X  écrit les fichiers chiffrés dans X au lieu de les envoyer (test hors ligne)
@@ -15,6 +16,7 @@ param(
   [switch]$Watch,
   [switch]$Once,
   [switch]$Apply,
+  [switch]$Compare,
   [string]$OutDir = "",
   [string]$File = ""
 )
@@ -230,7 +232,7 @@ function Sync-Once($cfg, $token, [string]$pass) {
 # ---------- Configuration guidée ----------
 function Run-Setup {
   Write-Host ""
-  Write-Host "=== Gringotts-Sync v1.11.3 : configuration ===" -ForegroundColor Yellow
+  Write-Host "=== Gringotts-Sync v1.11.4 : configuration ===" -ForegroundColor Yellow
   $cfg = [pscustomobject]@{ sv = ""; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" }
 
   # 1. Dossier WoW
@@ -306,6 +308,57 @@ function Run-Apply {
   Log ("Dash.lua copié dans {0}. Tape /reload en jeu." -f $addon)
 }
 
+
+# ---------- Comparaison export <-> API Blizzard (identifie ton HV) ----------
+function Run-Compare {
+  if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
+  $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
+  $text = Read-Export $cfg.sv
+  if (-not $text) { throw "Aucun export dans l'addon : fais /gt sync puis /reload en jeu." }
+  $mine = @{}   # id -> prix en cuivre
+  foreach ($ln in ($text -split "`n")) {
+    $f = $ln.TrimEnd("`r").Split(";")
+    if ($f[0] -eq "P" -and $f.Count -ge 5 -and [int64]$f[4] -gt 0 -and [int64]$f[2] -gt 0) { $mine[[int]$f[4]] = [int64]$f[2] }
+  }
+  if ($mine.Count -eq 0) { throw "Export sans identifiants d'objets : installe l'addon 1.12.3, /gt sync, /reload puis relance." }
+  Write-Host ("Prix avec identifiant dans ton export : {0}" -f $mine.Count)
+  $id = (Read-Host 'Client ID').Trim()
+  $sec = Read-Host 'Client Secret' -AsSecureString
+  $secPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)).Trim()
+  $tok = Invoke-RestMethod -Method Post -Uri 'https://oauth.battle.net/token' -Body @{grant_type='client_credentials'} `
+    -Headers @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${id}:$secPlain"))}
+  $secPlain = $null
+  $ns = "dynamic-forever-eu"
+  function Api([string]$path) {
+    try { return (Invoke-WebRequest -UseBasicParsing -Uri "https://eu.api.blizzard.com${path}?namespace=${ns}&locale=fr_FR" -Headers @{Authorization = "Bearer $($tok.access_token)"}).Content } catch { return $null }
+  }
+  $ix = Api '/data/wow/ruleset/1/auctions/index'
+  if (-not $ix) { throw "Index des HV illisible." }
+  $ahs = [regex]::Matches($ix, '"name":"([^"]*)","id":(\d+)') | ForEach-Object { [pscustomobject]@{ id = $_.Groups[2].Value; name = $_.Groups[1].Value } }
+  $res = @()
+  foreach ($ah in $ahs) {
+    $body = Api "/data/wow/ruleset/1/auctions/$($ah.id)/commodities"
+    if (-not $body) { continue }
+    $min = @{}
+    foreach ($m in [regex]::Matches($body, '"item":\{"id":(\d+)\},"quantity":\d+,"unit_price":(\d+)')) {
+      $k = [int]$m.Groups[1].Value
+      if ($mine.ContainsKey($k)) { $v = [int64]$m.Groups[2].Value; if (-not $min.ContainsKey($k) -or $v -lt $min[$k]) { $min[$k] = $v } }
+    }
+    if ($min.Count -lt 10) { continue }
+    $errs = @($min.Keys | ForEach-Object { [Math]::Abs($min[$_] - $mine[$_]) / [double]$mine[$_] } | Sort-Object)
+    $med = $errs[[int][Math]::Floor($errs.Count / 2)]
+    $near = @($errs | Where-Object { $_ -le 0.15 }).Count
+    $res += [pscustomobject]@{ HV = $ah.id; Nom = $ah.name; Objets = $min.Count; ErreurMediane = [Math]::Round($med * 100, 1); Proches15pct = [Math]::Round(100 * $near / $errs.Count, 0) }
+  }
+  $out = Join-Path $Home2 "compare-hv.txt"
+  $lines = @("Comparaison export / API Forever " + (Get-Date -Format s), "Objets de ton export avec identifiant : $($mine.Count)", "")
+  $lines += ($res | Sort-Object ErreurMediane | Format-Table -AutoSize | Out-String -Width 200).TrimEnd().Split("`n")
+  $lines += @("", "ErreurMediane = écart médian en % entre ton prix et le prix minimum de l'API ; Proches15pct = part des objets à moins de 15 %.")
+  $lines | ForEach-Object { Write-Host $_ }
+  $lines | Set-Content -Path $out -Encoding UTF8
+  Write-Host ""; Write-Host "Rapport : $out"
+}
+
 # ---------- Boucle de surveillance ----------
 function Run-Watch {
   $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
@@ -333,6 +386,7 @@ function Run-Watch {
 
 if ($Setup) { Run-Setup; return }
 if ($Apply) { Run-Apply; return }
+if ($Compare) { Run-Compare; return }
 if ($Watch) { Run-Watch; return }
 if ($Once -or $OutDir -or (-not $Watch)) {
   $cfg = if (Test-Path $CfgPath) { Get-Content $CfgPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ sv = $File; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" } }

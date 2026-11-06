@@ -1896,7 +1896,7 @@ function parseAddon(text){
     else if (f[0]==="E") o.equip.push({char:f[1], l:+f[2]||0, q:+f[3]||2, c:+f[4]||4, s:(+f[5]||0)/10000, ah:f[6]!=="" ? (+f[6])/10000 : null, n:f.slice(7).join(";")});
     else if (f[0]==="C") o.chars.push({n:f[1], bags:+f[2]||0, bank:+f[3]||0});
     else if (f[0]==="G") o.guild = {n:f[1], t:+f[2]||0, tabs:f[3]||""};
-    else if (f[0]==="P") { const c = +f[2]; if (c>0) { o.prices[f[1]] = c/10000; if (f[3]!=="" && f[3]!==undefined) o.ages[norm(f[1])] = +f[3]; } }
+    else if (f[0]==="P") { const c = +f[2]; if (c>0) { o.prices[f[1]] = c/10000; if (f[3]!=="" && f[3]!==undefined) o.ages[norm(f[1])] = +f[3]; if (+f[4] > 0) (o.itemIds = o.itemIds || {})[norm(f[1])] = +f[4]; } }
     else if (f[0]==="T") o.trades.push({k:f[1], t:+f[2]||0, q:+f[3]||1, c:(+f[4]||0)/10000, n:f.slice(5).join(";")});
     else if (f[0]==="V") { const c = parseFloat(f[2]); if (c>0) o.vendor[norm(f[1])] = {n:f[1], p:c/10000}; }
     else if (f[0]==="W") { const c = parseFloat(f[2]); if (c>0) o.vsell[norm(f[1])] = c/10000; }
