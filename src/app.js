@@ -1408,7 +1408,7 @@ function decisionReport(){
 const stepH = (n, t) => `<h2 style="display:flex;align-items:center;gap:10px"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--bg);font-size:14px">${n}</span>${t}</h2>`;
 views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0).length; return `
   <h1>Comptoir <span class="muted" style="font-size:.6em;font-weight:400">· Routine de session</span></h1>
-  <p class="lede">Routine du jour, dans l'ordre : persos de jeu → perso banque en dernier (relevés + scan HV) → un seul envoi → décisions → retour dans le jeu. Le jeu n'écrit les données d'un perso qu'à sa déconnexion ou à son <code>/reload</code> : le perso banque, connecté en dernier, charge les relevés des autres et les exporte tous.</p>
+  <p class="lede">Routine du jour, dans l'ordre : jouer → se déconnecter → un seul envoi → décisions → retour dans le jeu. L'addon relève sacs et or toutes les minutes et prépare l'export à la déconnexion : le dernier perso déconnecté exporte tous les persos du compte (addon 1.12.5 ou plus). Plus de <code>/gt sync</code> à taper.</p>
 
   <div class="impgrid">
   <div class="impcol">
@@ -1424,10 +1424,10 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
     <div id="trackOut"></div></details>
 
   ${stepH(2, "Perso banque en dernier : relevés et export")}
-  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Taper <code>/gt sync</code> (ou le bouton <b>Sync Gringotts</b> de la fenêtre de l'HV), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque. <b>Plus de scan HV</b> : les prix viennent de l'API Blizzard (étape 3).</p>
+  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Attendre environ une minute après la connexion, puis se <b>déconnecter</b> : l'export est écrit à la déconnexion, sans <code>/gt sync</code>. En cas de doute, <code>/gt status</code> doit afficher « Dernier export : il y a n min (logout) ». <b>Plus de scan HV</b> : les prix viennent de l'API Blizzard (étape 3).</p>
 
   ${stepH(3, "Bureau : Envoyer.bat et Prix-API.bat")}
-  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> du perso banque fait : un seul envoi suffit, il contient tous les persos (stock, or, recettes, niveaux). Lance ensuite <b>Prix-API.bat</b> : il récupère les prix de l'HV via l'API Blizzard et les envoie. Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix, sans rien faire en jeu. Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
+  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le dernier perso joué <b>déconnecté</b> : un seul envoi suffit, il contient tous les persos (stock, or, recettes, niveaux). Lance ensuite <b>Prix-API.bat</b> : il récupère les prix de l'HV via l'API Blizzard et les envoie. Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix, sans rien faire en jeu. Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
 
   ${stepH(4, "Dashboard : synchroniser")}
   <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
