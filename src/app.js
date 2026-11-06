@@ -430,7 +430,8 @@ function rebuild(){
     else if (x.k==="A") { e.bought += x.q; e.spent += x.c; } });
   Object.values(sales).forEach(e => { e.avg = e.sold ? e.rev/e.sold : null; e.thru = (e.sold + e.exp) ? e.sold/(e.sold + e.exp) : null; });
   const PA = state.priceAge || {t:0, a:{}};
-  const ageOf = k => { const a = PA.a[k]; return a===undefined ? null : a + Math.max(0, Math.floor((now - PA.t)/86400)); };
+  const AP = state.apiAge || {t:0, k:{}};
+  const ageOf = k => { if (AP.k[k]) return Math.max(0, Math.floor((now - AP.t)/86400)); const a = PA.a[k]; return a===undefined ? null : a + Math.max(0, Math.floor((now - PA.t)/86400)); };
   const stale = k => { const a = ageOf(k); return a!==null && a > S.staleDays ? a : null; };
   // ---------- Plans de montée : étape courante, voie la moins chère, réserve de compos ----------
   const plans = {}, reserve = {}, produced = {};
@@ -1422,15 +1423,16 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
     <div id="trackOut"></div></details>
 
-  ${stepH(2, "Perso banque en dernier : relevés, scan HV, export")}
-  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Scan complet Auctionator, puis bouton <b>Sync Gringotts</b> dans la fenêtre de l'HV (ou <code>/gt sync</code>), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque.</p>
+  ${stepH(2, "Perso banque en dernier : relevés et export")}
+  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Taper <code>/gt sync</code> (ou le bouton <b>Sync Gringotts</b> de la fenêtre de l'HV), puis <b>Entrée</b> pour le <code>/reload</code>. Le rechargement écrit l'export sur le disque. <b>Plus de scan HV</b> : les prix viennent de l'API Blizzard (étape 3).</p>
 
-  ${stepH(3, "Bureau : Envoyer.bat")}
-  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> du perso banque fait : un seul envoi suffit, il contient tous les persos. L'export part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
+  ${stepH(3, "Bureau : Envoyer.bat et Prix-API.bat")}
+  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le <code>/reload</code> du perso banque fait : un seul envoi suffit, il contient tous les persos (stock, or, recettes, niveaux). Lance ensuite <b>Prix-API.bat</b> : il récupère les prix de l'HV via l'API Blizzard et les envoie. Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix, sans rien faire en jeu. Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
 
   ${stepH(4, "Dashboard : synchroniser")}
-  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export : prix, stock total, recettes, niveaux, ventes, or et temps de recharge. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
+  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
   ${(() => { const c = readSync(); return c.report ? `<details open><summary>Dernier export reçu (synchronisation du ${new Date(c.lastOk).toLocaleString("fr-FR")})</summary>${c.report}</details>` : `<div class="note">Aucun export reçu par synchronisation sur cet appareil.</div>`; })()}
+  ${state.apiLast ? `<div class="note ok">Prix API (HV ${esc(state.apiLast.ah)}) : ${state.apiLast.n} prix du ${new Date(state.apiLast.t*1000).toLocaleString("fr-FR")}.</div>` : `<div class="note">Aucun prix API reçu : lance <b>Prix-API.bat</b> sur le PC.</div>`}
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : coller un export à la main (<code>/gt export</code> ou CSV Auctionator)</summary>
   <textarea id="impText" placeholder="WFC1;…  (export Gringotts)"></textarea>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="impParse">Analyser</button><button class="btn primary" id="impApply" disabled>Enregistrer les prix du ${fmtDate(today())}</button></div>
@@ -1643,6 +1645,24 @@ function parseAuctionator(text){
   return {prices: out, bad};
 }
 // ---------- Import de l'addon Gringotts (format WFC1) ----------
+// Prix de l'API Blizzard (HV), fichier data/api.json : « WFA1;horodatage;HV;n » puis lignes P;nom;cuivre;;id
+function parseApi(text){
+  const L = String(text||"").replace(/\r/g,"").split("\n"), h = L[0].split(";");
+  if (h[0] !== "WFA1") return null;
+  const o = {t:+h[1]||0, ah:h[2]||"", prices:{}, ids:{}};
+  L.slice(1).forEach(l => { const f = l.split(";"); if (f[0]==="P" && +f[2] > 0) { o.prices[f[1]] = (+f[2])/10000; if (+f[4] > 0) o.ids[norm(f[1])] = +f[4]; } });
+  return o;
+}
+function applyApi(pa){
+  const d = localDay(pa.t);
+  state.priceReset = true;                                   // des prix réels : plus d'historique de test
+  state.imports[d] = {...(state.imports[d]||{}), ...pa.prices}; dirtyImports.add(d);
+  const k = {}; Object.keys(pa.prices).forEach(n => k[norm(n)] = 1);
+  state.apiAge = {t:pa.t, k};
+  state.itemIds = {...(state.itemIds||{}), ...pa.ids};
+  state.apiLast = {t:pa.t, n:Object.keys(pa.prices).length, ah:pa.ah};
+  invalidateAll();
+}
 function parseAddon(text){
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (!/^WFC1;/.test(lines[0]||"")) return null;
@@ -1712,6 +1732,7 @@ function applyAddon(plan){
   state.ext = state.ext || {recipes:{}};
   Object.keys(state.ext.recipes).forEach(k => { if (xJobs.has(state.ext.recipes[k].job)) delete state.ext.recipes[k]; });
   Object.assign(state.ext.recipes, ext); invalidateAll();
+  if (o.itemIds) state.itemIds = {...(state.itemIds||{}), ...o.itemIds};
   // Un export réel remplace définitivement les données de test : plus d'historique fictif (médiane 30 j, stocks de départ)
   state.priceReset = true;
   if (Object.keys(o.prices).length) { state.imports[d] = {...(state.imports[d]||{}), ...o.prices}; dirtyImports.add(d); }
@@ -2045,7 +2066,7 @@ async function syncNow(opts = {}){
       if (!syncKeys || syncKeys.sig !== pass+"|"+meta.salt+"|"+meta.it) syncKeys = await deriveKeys(pass, meta);
     };
     await open();
-    const [lt, it] = await Promise.all([ghGet("data/latest.json"), ghGet("data/index.json")]);
+    const [lt, it, at] = await Promise.all([ghGet("data/latest.json"), ghGet("data/index.json"), ghGet("data/api.json").catch(() => null)]);
     if (!lt) throw syncErr("NODATA");
     let text;
     try { text = await decryptFile(lt, syncKeys); }
@@ -2063,6 +2084,9 @@ async function syncNow(opts = {}){
       const val = M.comps.reduce((a,c) => a + (c.value||0), 0) + M.pnjRows.reduce((a,c) => a + (c.value||0), 0);
       state.valueHist = {...(state.valueHist||{}), [dateKey]: Math.round(val*10000)/10000}; changed = true;
     }
+    // Prix de l'API Blizzard : plus récents que l'export, ils l'emportent
+    if (at) { try { const pa = parseApi(await decryptFile(at, syncKeys));
+      if (pa && Object.keys(pa.prices).length && !(state.apiLast && state.apiLast.t >= pa.t)) { applyApi(pa); compactImports(); rebuild(); changed = true; } } catch(e) {} }
     // Jours manquants (appareil neuf, ou pas ouvert depuis longtemps) : prix seuls, fichiers p-AAAA-MM-JJ.json
     const idx = it ? JSON.parse(it) : {days:[]}, lim = localDay(Date.now()/1000 - (state.settings.keepDays||90)*86400), floor = state.noHistoryBefore || "";
     const todo = (idx.days || []).filter(d => d >= lim && d >= floor && d !== dateKey && !state.imports[d]);

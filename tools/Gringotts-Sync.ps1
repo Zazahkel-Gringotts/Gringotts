@@ -4,6 +4,7 @@
   Usage (via Installer.bat) :
     -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe), puis premier envoi
     -Once      un envoi immédiat (Envoyer.bat) : lit le fichier de l'addon, chiffre, envoie
+    -Prices    récupère les prix de l'HV via l'API Blizzard et les envoie au dashboard (remplace le scan HV)
     -Compare   compare les prix de ton dernier export aux HV de l'API Blizzard (identifie ton HV)
     -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
@@ -17,6 +18,7 @@ param(
   [switch]$Once,
   [switch]$Apply,
   [switch]$Compare,
+  [switch]$Prices,
   [string]$OutDir = "",
   [string]$File = ""
 )
@@ -198,6 +200,14 @@ function Sync-Once($cfg, $token, [string]$pass) {
   if ($newSalt) { $cfg | ConvertTo-Json | Set-Content -Path $CfgPath -Encoding UTF8 }
 
   $priceLines = @($lines[0]) + @($lines | Where-Object { $_ -match "^P;" })
+  # Prix API du même jour (Prix-API.bat) : ils passent par-dessus les prix de l'export
+  if (Test-Path $ApiLastPath) {
+    $al = @(Get-Content $ApiLastPath -Encoding UTF8)
+    if ($al.Count -gt 2 -and $al[0] -eq $day) {
+      $apiP = @{}; foreach ($l in ($al | Select-Object -Skip 2)) { $f = $l.Split(";"); if ($f.Count -ge 2) { $apiP[$f[1]] = $l } }
+      $priceLines = @($priceLines[0]) + @($priceLines | Select-Object -Skip 1 | Where-Object { $f = $_.Split(";"); -not $apiP.ContainsKey($f[1]) }) + @($apiP.Values)
+    }
+  }
   $fullJson   = Protect-Bytes ([Text.Encoding]::UTF8.GetBytes($text)) $keys
   $priceJson  = Protect-Bytes ([Text.Encoding]::UTF8.GetBytes(($priceLines -join "`n"))) $keys
   $metaJson   = '{{"v":1,"it":{0},"salt":"{1}"}}' -f $KDF_ITER, $cfg.salt
@@ -232,7 +242,7 @@ function Sync-Once($cfg, $token, [string]$pass) {
 # ---------- Configuration guidée ----------
 function Run-Setup {
   Write-Host ""
-  Write-Host "=== Gringotts-Sync v1.11.4 : configuration ===" -ForegroundColor Yellow
+  Write-Host "=== Gringotts-Sync v1.12.0 : configuration ===" -ForegroundColor Yellow
   $cfg = [pscustomobject]@{ sv = ""; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" }
 
   # 1. Dossier WoW
@@ -359,6 +369,80 @@ function Run-Compare {
   Write-Host ""; Write-Host "Rapport : $out"
 }
 
+# ---------- Prix de l'HV via l'API Blizzard (remplace le scan Auctionator) ----------
+$IdsPath     = Join-Path $Home2 "ids.json"
+$ApiIdPath   = Join-Path $Home2 "apiid.dat"
+$ApiSecPath  = Join-Path $Home2 "apisec.dat"
+$ApiLastPath = Join-Path $Home2 "api-last.txt"
+
+function Run-Prices {
+  if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
+  $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
+  $token = Read-Secret $TokPath; $pass = Read-Secret $PwdPath
+  if (-not $token -or -not $pass) { throw "Configuration absente : lance Installer.bat." }
+  if (-not $cfg.salt) { throw "Aucun envoi encore fait : lance d'abord Envoyer.bat une fois." }
+  $ah = if ($cfg.PSObject.Properties.Name -contains "ah" -and $cfg.ah) { [string]$cfg.ah } else { "110" }
+
+  # Table nom -> identifiant d'objet : export local + mémoire des exports précédents
+  $ids = @{}
+  if (Test-Path $IdsPath) { try { (Get-Content $IdsPath -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $ids[$_.Name] = [int]$_.Value } } catch {} }
+  $sv = if ($File) { $File } else { $cfg.sv }
+  if (Test-Path $sv) {
+    $text = Read-Export $sv
+    if ($text) { foreach ($ln in ($text -split "`n")) { $f = $ln.TrimEnd("`r").Split(";"); if ($f[0] -eq "P" -and $f.Count -ge 5 -and [int]$f[4] -gt 0) { $ids[$f[1]] = [int]$f[4] } } }
+  }
+  if ($ids.Count -eq 0) { throw "Aucun identifiant d'objet connu : installe l'addon 1.12.3, fais /gt sync puis /reload en jeu, et relance." }
+  $o = [ordered]@{}; foreach ($k in ($ids.Keys | Sort-Object)) { $o[$k] = $ids[$k] }
+  $o | ConvertTo-Json | Set-Content -Path $IdsPath -Encoding UTF8
+
+  # Identifiants de l'API Blizzard (mémorisés, chiffrés par Windows pour ton compte)
+  $cid = Read-Secret $ApiIdPath; $csec = Read-Secret $ApiSecPath
+  if (-not $cid -or -not $csec) {
+    Write-Host "Première utilisation : colle tes identifiants Blizzard (ils seront mémorisés, chiffrés pour ton compte Windows)."
+    $cid = (Read-Host 'Client ID').Trim()
+    $sec = Read-Host 'Client Secret' -AsSecureString
+    $csec = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)).Trim()
+    Save-Secret $ApiIdPath (ConvertTo-SecureString $cid -AsPlainText -Force); Save-Secret $ApiSecPath (ConvertTo-SecureString $csec -AsPlainText -Force)
+  }
+  try {
+    $tok = Invoke-RestMethod -Method Post -Uri 'https://oauth.battle.net/token' -Body @{grant_type='client_credentials'} `
+      -Headers @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${cid}:$csec"))}
+  } catch { Remove-Item $ApiIdPath, $ApiSecPath -Force -ErrorAction SilentlyContinue; throw "Identifiants Blizzard refusés (effacés) : relance pour les ressaisir. $($_.Exception.Message)" }
+  $csec = $null
+
+  $body = $null
+  try { $body = (Invoke-WebRequest -UseBasicParsing -Uri "https://eu.api.blizzard.com/data/wow/ruleset/1/auctions/${ah}/commodities?namespace=dynamic-forever-eu&locale=fr_FR" -Headers @{Authorization = "Bearer $($tok.access_token)"}).Content } catch {}
+  if (-not $body) { throw "HV $ah illisible via l'API Blizzard." }
+  $min = @{}
+  foreach ($m in [regex]::Matches($body, '"item":\{"id":(\d+)\},"quantity":\d+,"unit_price":(\d+)')) {
+    $k = [int]$m.Groups[1].Value; $v = [int64]$m.Groups[2].Value
+    if (-not $min.ContainsKey($k) -or $v -lt $min[$k]) { $min[$k] = $v }
+  }
+  $t = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+  $day = [DateTimeOffset]::FromUnixTimeSeconds($t).LocalDateTime.ToString("yyyy-MM-dd")
+  $pl = New-Object System.Collections.Generic.List[string]
+  foreach ($name in ($ids.Keys | Sort-Object)) { $k = $ids[$name]; if ($min.ContainsKey($k)) { $pl.Add(("P;{0};{1};;{2}" -f $name, $min[$k], $k)) } }
+  if ($pl.Count -eq 0) { throw "Aucun de tes objets n'a d'annonce dans l'HV $ah." }
+  $apiText = ("WFA1;{0};{1};{2}" -f $t, $ah, $pl.Count) + "`n" + ($pl -join "`n")
+  Set-Content -Path $ApiLastPath -Value ("$day`n" + $apiText) -Encoding UTF8
+
+  $keys = Get-Keys $pass ([Convert]::FromBase64String($cfg.salt))
+  Gh-Put $cfg $token "data/api.json" (Protect-Bytes ([Text.Encoding]::UTF8.GetBytes($apiText)) $keys) ("prix API {0}" -f (Get-Date -Format "yyyy-MM-dd HH:mm"))
+  # Jour courant : fichier de prix = export local + prix API par-dessus (historique pour les autres appareils)
+  $priceLines = @{}
+  if ($text) { foreach ($ln in ($text -split "`n")) { $ln = $ln.TrimEnd("`r"); if ($ln -match "^P;([^;]*);") { $priceLines[$Matches[1]] = $ln } } }
+  foreach ($l in $pl) { $f = $l.Split(";"); $priceLines[$f[1]] = $l }
+  $pj = Protect-Bytes ([Text.Encoding]::UTF8.GetBytes((@("WFC1;$t;API;$ah") + ($priceLines.Values | Sort-Object)) -join "`n")) $keys
+  Gh-Put $cfg $token ("data/p-{0}.json" -f $day) $pj ("prix {0}" -f $day)
+  $days = @(); $idx = Gh-GetText $cfg $token "data/index.json"
+  if ($idx) { try { $days = @(($idx | ConvertFrom-Json).days) } catch {} }
+  if ($days -notcontains $day) {
+    $days = @($days + $day | Sort-Object -Unique)
+    Gh-Put $cfg $token "data/index.json" ('{{"t":{0},"days":[{1}]}}' -f $t, (($days | ForEach-Object { '"' + $_ + '"' }) -join ",")) "index"
+  }
+  Log ("Prix API envoyés : {0} prix (HV {1}) sur {2} objets connus." -f $pl.Count, $ah, $ids.Count)
+}
+
 # ---------- Boucle de surveillance ----------
 function Run-Watch {
   $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
@@ -387,6 +471,7 @@ function Run-Watch {
 if ($Setup) { Run-Setup; return }
 if ($Apply) { Run-Apply; return }
 if ($Compare) { Run-Compare; return }
+if ($Prices) { Run-Prices; return }
 if ($Watch) { Run-Watch; return }
 if ($Once -or $OutDir -or (-not $Watch)) {
   $cfg = if (Test-Path $CfgPath) { Get-Content $CfgPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ sv = $File; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" } }

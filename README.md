@@ -5,6 +5,7 @@ Tableau de bord de pilotage des professions pour WoW Forever, alimenté par l'ad
 - **Dashboard** : `index.html` (GitHub Pages). Un mot de passe déchiffre les données dans ton navigateur.
 - **Addon** : `addon/Gringotts.zip` (v1.12.1), à décompresser dans `Interface\AddOns\`.
 - **Envoi depuis Windows** : `tools/Installer.bat` (configuration, une fois) puis `tools/Envoyer.bat` (à chaque envoi).
+- **Prix de l'HV par l'API Blizzard** : `tools/Prix-API.bat` (à lancer quand tu veux) récupère les prix de ton HV (n° 110 par défaut, `ah` dans `config.json`) et les envoie chiffrés dans `data/api.json`. Les identifiants Blizzard sont demandés une fois, puis mémorisés (chiffrés par Windows). `tools/Comparer-HV.bat` sert à identifier quelle HV correspond à ton marché.
 
 ## Circuit des données
 
@@ -30,7 +31,7 @@ Si le navigateur refuse le dossier (WoW dans `Program Files`, par exemple) : bou
    - Repository access : *Only select repositories* → `Gringotts`.
    - Permissions → *Contents* : **Read and write**. Rien d'autre.
 3. **Script** : télécharge `tools/Gringotts-Sync.ps1`, `tools/Installer.bat`, `tools/Envoyer.bat` et `tools/Appliquer.bat` dans le même dossier, puis double-clique `Installer.bat`. Il demande le dossier WoW (détecté si possible), le jeton, et le mot de passe du dashboard, puis fait un premier envoi. Rien ne tourne en arrière-plan.
-   - À chaque envoi ensuite : scan en jeu, `/reload`, puis double-clique `Envoyer.bat`.
+   - À chaque envoi ensuite : `/gt sync` en jeu, `/reload`, puis double-clique `Envoyer.bat`, puis `Prix-API.bat` pour les prix de l'HV.
 4. **Dashboard** : ouvre le site, saisis le même mot de passe. Il est retenu sur l'appareil si la case est cochée.
 
 ## Sécurité : ce que le repo public expose
