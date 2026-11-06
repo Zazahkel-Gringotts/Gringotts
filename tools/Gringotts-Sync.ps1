@@ -242,7 +242,7 @@ function Sync-Once($cfg, $token, [string]$pass) {
 # ---------- Configuration guidée ----------
 function Run-Setup {
   Write-Host ""
-  Write-Host "=== Gringotts-Sync v1.12.0 : configuration ===" -ForegroundColor Yellow
+  Write-Host "=== Gringotts-Sync v1.13.0 : configuration ===" -ForegroundColor Yellow
   $cfg = [pscustomobject]@{ sv = ""; repo = "Zazahkel-Gringotts/Gringotts"; branch = "main"; salt = "" }
 
   # 1. Dossier WoW
@@ -374,6 +374,8 @@ $IdsPath     = Join-Path $Home2 "ids.json"
 $ApiIdPath   = Join-Path $Home2 "apiid.dat"
 $ApiSecPath  = Join-Path $Home2 "apisec.dat"
 $ApiLastPath = Join-Path $Home2 "api-last.txt"
+$MissPath    = Join-Path $Home2 "ids-introuvables.json"
+$ItemsLogPath = Join-Path $Home2 "items-last.txt"
 
 function Run-Prices {
   if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
@@ -418,6 +420,47 @@ function Run-Prices {
     $k = [int]$m.Groups[1].Value; $v = [int64]$m.Groups[2].Value
     if (-not $min.ContainsKey($k) -or $v -lt $min[$k]) { $min[$k] = $v }
   }
+
+  # Objets sans identifiant (lignes U; de l'export) : recherche par nom dans la base d'objets Blizzard (namespace static).
+  # Les identifiants trouvés sont mémorisés dans ids.json ; les introuvables ne sont retentés qu'après 3 jours.
+  $rlog = New-Object System.Collections.Generic.List[string]
+  try {
+    $unres = New-Object System.Collections.Generic.List[string]
+    if ($text) { foreach ($ln in ($text -split "`n")) { $f = $ln.TrimEnd("`r").Split(";"); if ($f[0] -eq "U" -and $f.Count -ge 2 -and $f[1] -and -not $ids.ContainsKey($f[1])) { $unres.Add($f[1]) } } }
+    $miss = @{}; if (Test-Path $MissPath) { try { (Get-Content $MissPath -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $miss[$_.Name] = [int64]$_.Value } } catch {} }
+    $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $todo = @($unres | Where-Object { -not $miss.ContainsKey($_) -or ($now - $miss[$_]) -gt 259200 } | Sort-Object -Unique)
+    $rlog.Add(("Objets sans identifiant : {0} ; à rechercher : {1}" -f $unres.Count, $todo.Count))
+    if ($todo.Count -gt 0) {
+      Write-Host ("Recherche des identifiants de {0} objets (première fois seulement)..." -f $todo.Count)
+      $found = 0; $errs = 0; $okq = 0; $first = ""
+      $hdr = @{Authorization = "Bearer $($tok.access_token)"}
+      foreach ($nm in $todo) {
+        $uri = "https://eu.api.blizzard.com/data/wow/search/item?namespace=static-forever-eu&locale=fr_FR&orderby=id&_pageSize=20&name.fr_FR=" + [Uri]::EscapeDataString($nm)
+        try {
+          $r = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers $hdr
+          $okq++
+          $js = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()) | ConvertFrom-Json
+          $cands = @($js.results | Where-Object { $_.data.name.fr_FR -eq $nm } | ForEach-Object { [int]$_.data.id })
+          if ($cands.Count -gt 0) {
+            $inAh = @($cands | Where-Object { $min.ContainsKey($_) })
+            $ids[$nm] = if ($inAh.Count -gt 0) { ($inAh | Sort-Object | Select-Object -First 1) } else { ($cands | Sort-Object | Select-Object -First 1) }
+            $found++
+          } else { $miss[$nm] = $now }
+        } catch {
+          $errs++; if (-not $first) { $first = $_.Exception.Message }
+          if ($errs -ge 3 -and $okq -eq 0) { $rlog.Add("Recherche indisponible, abandon : $first"); break }
+        }
+      }
+      $rlog.Add(("Recherche : {0} identifiants trouvés, {1} requêtes réussies, {2} erreurs. {3}" -f $found, $okq, $errs, $first))
+      $o2 = [ordered]@{}; foreach ($k in ($ids.Keys | Sort-Object)) { $o2[$k] = $ids[$k] }
+      $o2 | ConvertTo-Json | Set-Content -Path $IdsPath -Encoding UTF8
+      $m2 = [ordered]@{}; foreach ($k in ($miss.Keys | Sort-Object)) { $m2[$k] = $miss[$k] }
+      $m2 | ConvertTo-Json | Set-Content -Path $MissPath -Encoding UTF8
+      Write-Host ($rlog -join "`n")
+    }
+  } catch { $rlog.Add("Recherche d'identifiants en échec : " + $_.Exception.Message) }
+  Set-Content -Path $ItemsLogPath -Value ($rlog -join "`n") -Encoding UTF8
   $t = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
   $day = [DateTimeOffset]::FromUnixTimeSeconds($t).LocalDateTime.ToString("yyyy-MM-dd")
   $pl = New-Object System.Collections.Generic.List[string]
@@ -441,6 +484,7 @@ function Run-Prices {
     Gh-Put $cfg $token "data/index.json" ('{{"t":{0},"days":[{1}]}}' -f $t, (($days | ForEach-Object { '"' + $_ + '"' }) -join ",")) "index"
   }
   Log ("Prix API envoyés : {0} prix (HV {1}) sur {2} objets connus." -f $pl.Count, $ah, $ids.Count)
+  if ($rlog.Count -gt 0) { Log ($rlog[-1]) }
 }
 
 # ---------- Boucle de surveillance ----------
