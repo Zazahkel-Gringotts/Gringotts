@@ -478,6 +478,8 @@ function Run-Prices {
     }
   } catch { $rlog.Add("Recherche d'identifiants en échec : " + $_.Exception.Message) }
   Set-Content -Path $ItemsLogPath -Value ($rlog -join "`n") -Encoding UTF8
+  # Identifiants connus sur ce PC (dont ceux vus en jeu) : publiés pour le relevé automatique GitHub (données publiques)
+  try { $o3 = [ordered]@{}; foreach ($k in ($ids.Keys | Sort-Object)) { $o3[$k] = $ids[$k] }; Gh-Put $cfg $token "data/ids-pc.json" ($o3 | ConvertTo-Json) "identifiants" } catch { $rlog.Add("Publication des identifiants impossible : " + $_.Exception.Message) }
   $t = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
   $day = [DateTimeOffset]::FromUnixTimeSeconds($t).LocalDateTime.ToString("yyyy-MM-dd")
   $pl = New-Object System.Collections.Generic.List[string]

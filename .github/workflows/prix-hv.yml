@@ -1,0 +1,42 @@
+name: Prix de l'HV
+
+on:
+  schedule:
+    # UTC : 06h/07h = 8h Paris (été/hiver), 10h/11h = 12h, 17h/18h = 19h. Le script ne garde que les heures de Paris voulues.
+    - cron: "7 6,7,10,11,17,18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prix-hv
+  cancel-in-progress: false
+
+jobs:
+  prix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Relevé des prix
+        env:
+          BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+          BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+          GT_AH: ${{ vars.GT_AH }}
+        run: python tools/prix_hv.py
+      - name: Publier
+        run: |
+          git config user.name "gringotts-bot"
+          git config user.email "gringotts-bot@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then echo "Rien de nouveau."; exit 0; fi
+          git commit -m "prix HV $(TZ=Europe/Paris date '+%Y-%m-%d %H:%M')"
+          for i in 1 2 3 4; do
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i*5))
+          done
+          echo "Échec de la publication" >&2; exit 1

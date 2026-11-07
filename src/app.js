@@ -1418,13 +1418,13 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
 
   <div class="impgrid">
   <div class="impcol">
-  ${stepH(1, "Bureau : Routine.bat")}
-  <p class="muted" style="margin-top:0">Double-clique <b>Routine.bat</b> : il lance <b>Envoyer.bat</b> (stock, or, recettes, niveaux et ventes de ta dernière session, tous persos) puis <b>Prix-API.bat</b> (prix de l'HV via l'API Blizzard, plus de scan en jeu). Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi. Les deux .bat restent utilisables séparément ; Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix.</p>
+  ${stepH(1, "Bureau : Envoyer.bat")}
+  <p class="muted" style="margin-top:0">Double-clique <b>Envoyer.bat</b> (stock, or, recettes, niveaux et ventes de ta dernière session, tous persos), chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi. Les <b>prix de l'HV</b> sont récupérés automatiquement par GitHub à <b>8 h, 12 h et 19 h</b> (heure de Paris), sans PC allumé. <b>Routine.bat</b> / <b>Prix-API.bat</b> restent un secours manuel.</p>
 
   ${stepH(2, "Dashboard : synchroniser")}
   <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta dernière session.</p>
   ${(() => { const c = readSync(); return c.report ? `<details open><summary>Dernier export reçu (synchronisation du ${new Date(c.lastOk).toLocaleString("fr-FR")})</summary>${c.report}</details>` : `<div class="note">Aucun export reçu par synchronisation sur cet appareil.</div>`; })()}
-  ${state.apiLast ? `<div class="note ok">Prix API (HV ${esc(state.apiLast.ah)}) : ${state.apiLast.n} prix du ${new Date(state.apiLast.t*1000).toLocaleString("fr-FR")}.</div>` : `<div class="note">Aucun prix API reçu : lance <b>Prix-API.bat</b> sur le PC.</div>`}
+  ${state.apiLast ? `<div class="note ok">Prix API (HV ${esc(state.apiLast.ah)}) : ${state.apiLast.n} prix du ${new Date(state.apiLast.t*1000).toLocaleString("fr-FR")}.</div>` : `<div class="note">Aucun prix API reçu : attends le prochain passage (8 h / 12 h / 19 h) ou lance <b>Prix-API.bat</b> sur le PC.</div>`}
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : coller un export à la main (<code>/gt export</code> ou CSV Auctionator)</summary>
   <textarea id="impText" placeholder="WFC1;…  (export Gringotts)"></textarea>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="impParse">Analyser</button><button class="btn primary" id="impApply" disabled>Enregistrer les prix du ${fmtDate(today())}</button></div>
@@ -2061,7 +2061,7 @@ async function syncNow(opts = {}){
       if (!syncKeys || syncKeys.sig !== pass+"|"+meta.salt+"|"+meta.it) syncKeys = await deriveKeys(pass, meta);
     };
     await open();
-    const [lt, it, at] = await Promise.all([ghGet("data/latest.json"), ghGet("data/index.json"), ghGet("data/api.json").catch(() => null)]);
+    const [lt, it, at, ap] = await Promise.all([ghGet("data/latest.json"), ghGet("data/index.json"), ghGet("data/api.json").catch(() => null), ghGet("data/api-public.json").catch(() => null)]);
     if (!lt) throw syncErr("NODATA");
     let text;
     try { text = await decryptFile(lt, syncKeys); }
@@ -2080,14 +2080,20 @@ async function syncNow(opts = {}){
       state.valueHist = {...(state.valueHist||{}), [dateKey]: Math.round(val*10000)/10000}; changed = true;
     }
     // Prix de l'API Blizzard : plus récents que l'export, ils l'emportent
-    if (at) { try { const pa = parseApi(await decryptFile(at, syncKeys));
-      if (pa && Object.keys(pa.prices).length && !(state.apiLast && state.apiLast.t >= pa.t)) { applyApi(pa); compactImports(); rebuild(); changed = true; } } catch(e) {} }
+    // Deux sources : api.json (chiffré, Windows) et api-public.json (GitHub Actions) ; la plus ancienne d'abord, la plus récente l'emporte
+    const apis = [];
+    if (at) { try { const pa = parseApi(await decryptFile(at, syncKeys)); if (pa) apis.push(pa); } catch(e) {} }
+    if (ap) { try { const pa = parseApi(ap); if (pa) apis.push(pa); } catch(e) {} }
+    apis.sort((a, b) => a.t - b.t).forEach(pa => {
+      if (Object.keys(pa.prices).length && !(state.apiLast && state.apiLast.t >= pa.t)) { applyApi(pa); compactImports(); rebuild(); changed = true; } });
     // Jours manquants (appareil neuf, ou pas ouvert depuis longtemps) : prix seuls, fichiers p-AAAA-MM-JJ.json
     const idx = it ? JSON.parse(it) : {days:[]}, lim = localDay(Date.now()/1000 - (state.settings.keepDays||90)*86400), floor = state.noHistoryBefore || "";
     const todo = (idx.days || []).filter(d => d >= lim && d >= floor && d !== dateKey && !state.imports[d]);
     for (let i = 0; i < todo.length; i += 5) await Promise.all(todo.slice(i, i+5).map(async d => {
-      try { const tx = await siteGet(`data/p-${d}.json`); if (!tx) return;
-        const pa = parseAddon(await decryptFile(tx, syncKeys)); if (pa && Object.keys(pa.prices).length) { state.imports[d] = pa.prices; changed = true; } } catch(e) {} }));
+      try { let pr = {};
+        try { const tx = await siteGet(`data/p-${d}.json`); if (tx) { const pa = parseAddon(await decryptFile(tx, syncKeys)); if (pa) pr = pa.prices; } } catch(e) {}
+        try { const tp = await siteGet(`data/pp-${d}.json`); if (tp) { const pa = parseAddon(tp); if (pa) pr = {...pr, ...pa.prices}; } } catch(e) {}
+        if (Object.keys(pr).length) { state.imports[d] = pr; changed = true; } } catch(e) {} }));
     if (changed) { compactImports(); rebuild(); persist(); render(); }
     writeSync({...readSync(), meta, lastOk: Date.now(), exp: ao.exported, ...(syncReportHtml ? {report: syncReportHtml} : {})});
     refreshSyncSt(); if (opts.manual) toast(changed ? "Synchronisé : données mises à jour" : "Déjà à jour");

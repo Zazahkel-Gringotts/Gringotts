@@ -57,3 +57,9 @@ Si le navigateur refuse le dossier (WoW dans `Program Files`, par exemple) : bou
 ## Objets sans identifiant
 
 `Prix-API.bat` cherche par nom (insensible à la casse et aux accents) les objets inconnus de l'addon ; ce qu'il ne trouve pas est listé avec les noms proches dans `%APPDATA%\GringottsSync\items-last.txt`. Pour forcer une correspondance, crée `%APPDATA%\GringottsSync\ids-manuel.json` : `{"Nom dans le jeu": 12345}` (prioritaire, relu à chaque passage).
+
+## Prix de l'HV automatiques (GitHub Actions)
+
+Le workflow `.github/workflows/prix-hv.yml` lance `tools/prix_hv.py` à **8 h, 12 h et 19 h (Paris)**, sans PC allumé. Il écrit `data/api-public.json` (derniers prix), `data/pp-AAAA-MM-JJ.json` (historique du jour ; le dernier passage de la journée fait foi) et met à jour `data/index.json`. Le dashboard les lit à chaque synchro.
+
+Mise en place (une fois) : dépôt → Settings → Secrets and variables → Actions → secrets `BLIZZARD_CLIENT_ID` et `BLIZZARD_CLIENT_SECRET` (variable optionnelle `GT_AH`, 110 par défaut) ; puis onglet Actions → « Prix de l'HV » → Run workflow. Les horaires GitHub peuvent avoir quelques minutes (parfois plus) de retard ; le dépôt doit rester actif (GitHub désactive les workflows après 60 jours sans activité). `Prix-API.bat` / `Routine.bat` restent un secours manuel ; `Deplanifier-HV.bat` retire l'ancienne tâche Windows.
