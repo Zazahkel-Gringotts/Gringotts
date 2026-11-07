@@ -211,7 +211,7 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
       <li><a href="#reglages" data-view="reglages">Réglages</a></li>
     </ul>
     <p class="freshness" id="fresh"></p>
-    <div class="syncbox"><button class="btn sm" id="syncBtn" type="button">↻ Synchroniser</button> <button class="btn sm" id="addonBtn" type="button" hidden title="Écrit les décisions dans le dossier de l'addon, puis /reload en jeu">→ Envoyer à l'addon</button><p class="freshness" id="syncSt"></p></div>
+    <div class="syncbox"><button class="btn sm" id="syncBtn" type="button">↻ Synchroniser</button> <button class="btn sm" id="refBtn" type="button" hidden title="Lance la récupération des prix de l'HV sur GitHub (1 à 2 min), puis synchronise">⟳ Prix HV</button> <button class="btn sm" id="addonBtn" type="button" hidden title="Écrit les décisions dans le dossier de l'addon, puis /reload en jeu">→ Envoyer à l'addon</button><p class="freshness" id="syncSt"></p></div>
     <div class="forever" role="img" aria-label="World of Warcraft Forever"></div>
   </nav>
   <main id="main"></main>
@@ -1660,7 +1660,7 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
   <div class="impgrid">
   <div class="impcol">
   ${stepH(1, "Bureau : Envoyer.bat")}
-  <p class="muted" style="margin-top:0">Double-clique <b>Envoyer.bat</b> (stock, or, recettes, niveaux et ventes de ta dernière session, tous persos), chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi. Les <b>prix de l'HV</b> sont récupérés automatiquement par GitHub à <b>8 h, 12 h et 19 h</b> (heure de Paris), sans PC allumé. <b>Routine.bat</b> / <b>Prix-API.bat</b> restent un secours manuel.</p>
+  <p class="muted" style="margin-top:0">Double-clique <b>Envoyer.bat</b> (stock, or, recettes, niveaux et ventes de ta dernière session, tous persos), chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi. Les <b>prix de l'HV</b> sont récupérés automatiquement par GitHub à <b>8 h, 12 h et 19 h</b> (heure de Paris), sans PC allumé. Pour les avoir tout de suite : bouton <b>⟳ Prix HV</b> du menu (jeton GitHub à enregistrer dans Réglages). <b>Routine.bat</b> / <b>Prix-API.bat</b> restent un secours manuel.</p>
 
   ${stepH(2, "Dashboard : synchroniser")}
   <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta dernière session.</p>
@@ -1735,6 +1735,9 @@ views.reglages = () => { const S = state.settings; return `
   <h2>Tailles de pile</h2>
   <div class="tw"><table><tbody>${STACK_GROUPS.map(([g,l,d]) => `<tr><td>${esc(l)}</td><td><input class="num" type="number" step="1" min="1" data-stack="${g}" value="${(S.stacks||{})[g] || d}"></td><td class="muted">Défaut Classic : ${d}</td></tr>`).join("")}</tbody></table></div>
   <div class="toolbar" style="margin-top:10px"><button class="btn" id="targetsReset">Revenir aux cibles auto (${Object.keys(state.target).length} manuelle(s))</button></div>
+  <h2>Rafraîchir les prix à la demande</h2>
+  <p class="muted">Le bouton « ⟳ Prix HV » (menu de gauche) lance la récupération des prix sur GitHub sans attendre 8 h / 12 h / 19 h. Il demande un jeton GitHub « fine-grained » limité à ce dépôt, avec la seule permission <b>Actions : Read and write</b> (GitHub → Settings → Developer settings → Fine-grained tokens). Le jeton reste sur cet appareil.</p>
+  <div class="toolbar"><input type="password" id="ghTok" placeholder="${ghTok() ? "Jeton enregistré (••••)" : "github_pat_…"}" autocomplete="off" style="min-width:260px"><button class="btn" id="ghTokSave">Enregistrer</button>${ghTok() ? `<button class="btn" id="ghTokDel">Supprimer le jeton</button>` : ""}</div>
   <h2>Sauvegarde</h2>
   <p class="muted">Vos données sont enregistrées sur cet appareil. Le bouton « Synchroniser » (menu de gauche) les met à jour depuis le jeu ; une sauvegarde permet de les transférer.</p>
   <div class="toolbar"><button class="btn" id="bkExport">Exporter une sauvegarde</button><button class="btn" id="bkShow">Restaurer une sauvegarde</button><button class="btn" id="resetData" style="color:var(--bad)" title="Efface prix (y compris ceux de test), stocks, recettes apprises, niveaux, or et ventes : tableau vierge. Garde les réglages et les frais de dépôt mesurés.">Réinitialiser mes données</button><button class="btn" id="reset" style="color:var(--bad)" title="Retour à l'état d'origine : réglages effacés, prix et stocks de test du 29/10 remis">Tout effacer</button></div>
@@ -2368,7 +2371,39 @@ async function syncNow(opts = {}){
 }
 function showLock(msg){ const el = document.getElementById("lock"); if (!el) return; el.hidden = false; document.getElementById("lockMsg").textContent = msg || ""; setTimeout(() => { try { document.getElementById("lockPw").focus(); } catch(e) {} }, 50); }
 function hideLock(){ const el = document.getElementById("lock"); if (el) el.hidden = true; }
+const GH_TOK_LS = "gringotts-ghtok";
+const ghTok = () => { try { return localStorage.getItem(GH_TOK_LS) || ""; } catch(e) { return ""; } };
+function refreshRefBtn(){ const b = document.getElementById("refBtn"); if (b) b.hidden = !ghTok(); }
+let refBusy = false;
+async function refreshPrices(){
+  if (refBusy) return; const tok = ghTok(); if (!tok) { toast("Ajoute d'abord un jeton GitHub dans Réglages"); return; }
+  refBusy = true; const b = document.getElementById("refBtn"); if (b) b.disabled = true;
+  try {
+    const prev = (state.apiLast && state.apiLast.t) || 0;
+    setSyncSt("Prix : lancement sur GitHub…");
+    const r = await fetch(`https://api.github.com/repos/${GH.repo}/actions/workflows/prix-hv.yml/dispatches`, {method:"POST",
+      headers:{"Authorization":"Bearer "+tok, "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"}, body: JSON.stringify({ref: GH.branch})});
+    if (r.status !== 204) {
+      const m = r.status===401 ? "jeton invalide ou expiré" : r.status===403 || r.status===404 ? "jeton sans accès à ce dépôt ou sans la permission Actions : écriture" : r.status===422 ? "workflow introuvable ou non déclenchable" : "HTTP "+r.status;
+      toast("Échec du lancement : " + m); setSyncSt("Échec du lancement des prix"); return; }
+    const t0 = Date.now();
+    while (Date.now() - t0 < 300000) {
+      await new Promise(res => setTimeout(res, 12000));
+      setSyncSt("Prix : récupération en cours… " + Math.round((Date.now()-t0)/1000) + " s");
+      let pa = null; try { pa = parseApi(await ghGet("data/api-public.json")); } catch(e) {}
+      if (pa && pa.t > prev) { syncBusy = false; const res = await syncNow({manual:true}); if (res && res.ok) toast("Prix HV mis à jour (" + Object.keys(pa.prices).length + " prix)"); return; }
+    }
+    toast("Pas de nouveaux prix après 5 min : vérifie l'onglet Actions sur GitHub"); setSyncSt("Prix : délai dépassé");
+  } catch(e) { toast("Échec : " + (e && e.message || "réseau")); setSyncSt("Échec du lancement des prix"); }
+  finally { refBusy = false; if (b) b.disabled = false; }
+}
 function initSync(){
+  refreshRefBtn(); document.getElementById("refBtn").addEventListener("click", refreshPrices);
+  document.addEventListener("click", e => {
+    const t = e.target && e.target.id;
+    if (t === "ghTokSave") { const v = (document.getElementById("ghTok").value || "").trim(); if (!v) return; try { localStorage.setItem(GH_TOK_LS, v); } catch(x) {} refreshRefBtn(); toast("Jeton enregistré"); render(); }
+    if (t === "ghTokDel") { try { localStorage.removeItem(GH_TOK_LS); } catch(x) {} refreshRefBtn(); toast("Jeton supprimé"); render(); }
+  });
   document.getElementById("syncBtn").addEventListener("click", () => syncNow({manual:true}));
   const ab = document.getElementById("addonBtn"); if (ab) { ab.hidden = !CAN_FS; ab.addEventListener("click", sendToAddon); }
   document.getElementById("lockSkip").addEventListener("click", e => { e.preventDefault(); sessSet(SYNC_LS+"-skip", "1"); hideLock(); });
