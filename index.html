@@ -974,7 +974,7 @@ function deEval(type, brIdx, q){
 const views = {};
 let current = "controle";
 const sortState = {};
-const filters = {crafts:{q:"",st:"all",act:"all"}, enchant:{q:"",cat:"all",st:"all"}, stock:{q:"",sig:"all",used:true}, recettes:{q:"",kind:"all",l:"all"}};
+const filters = {crafts:{q:"",st:"all",act:"all"}, enchant:{q:"",cat:"all",st:"all"}, stock:{q:"",sig:"all",used:true,have:false}, recettes:{q:"",kind:"all",l:"all"}};
 
 function stPill(st, txt){ const t = txt || ({ok:"Rentable",warn:"Marge faible",bad:"Perte",mute:"À vérifier"})[st]; return `<span class="st ${st}">${esc(t)}</span>`; }
 function sortRows(view, rows, defKey, defDir){
@@ -1145,8 +1145,8 @@ function compAdvCell(c){
 }
 views.stock = () => {
   const f = filters.stock;
-  const anyUsed = M.comps.some(c => c.used) || M.pnjRows.some(p => p.used), useF = f.used && anyUsed;   // sans recette apprise, le filtre ne laisserait rien : on affiche tout
-  let rows = M.comps.filter(c => (!useF || c.used) && (!f.q || norm(c.n).includes(norm(f.q))) && (f.sig==="all" || c.sig===f.sig || (f.sig==="buy" && c.toBuy>0)));
+  const anyUsed = M.comps.some(c => c.used) || M.pnjRows.some(p => p.used), useF = f.used && anyUsed && !f.have;   // sans recette apprise, le filtre ne laisserait rien : on affiche tout
+  let rows = M.comps.filter(c => (!useF || c.used) && (!f.have || c.stock > 0) && (!f.q || norm(c.n).includes(norm(f.q))) && (f.sig==="all" || c.sig===f.sig || (f.sig==="buy" && c.toBuy>0)));
   rows = sortRows("stock", rows, "delta", "asc");
   const toBuy = M.comps.filter(c=>c.used && c.toBuy>0);
   const pnjShown = M.pnjRows.filter(p => !useF || p.used);
@@ -1156,19 +1156,21 @@ views.stock = () => {
   <div class="toolbar">
     <input type="search" data-f="stock.q" value="${esc(f.q)}" placeholder="Rechercher un composant" aria-label="Rechercher un composant">
     <select data-f="stock.sig" aria-label="Signal">${[["all","Tous les signaux"],["ok","Acheter"],["warn","Neutre"],["bad","Trop cher"],["buy","À réassortir"]].map(([v,l])=>`<option value="${v}"${f.sig===v?" selected":""}>${l}</option>`).join("")}</select>
-    <label><input type="checkbox" data-f="stock.used"${f.used?" checked":""}> Seulement les compos de mes recettes</label>${f.used && !anyUsed ? ` <span class="muted small">(aucune recette apprise relevée : tous les composants sont affichés)</span>` : ""}
+    <label title="Objets dont le stock exporté est supérieur à 0 (sacs, banque, tous persos) : compare le prix HV pour décider de revendre ou non. Désactive le filtre « compos de mes recettes »."><input type="checkbox" data-f="stock.have"${f.have?" checked":""}> Seulement ce que j'ai en stock</label>
+    <label><input type="checkbox" data-f="stock.used"${f.used?" checked":""}${f.have?" disabled":""}> Seulement les compos de mes recettes</label>${f.used && !anyUsed ? ` <span class="muted small">(aucune recette apprise relevée : tous les composants sont affichés)</span>` : ""}
     <span class="count">${rows.length} composants</span>
   </div>
   <div class="note ${M.slotsUsed > state.settings.slots ? "warn" : "ok"}">Place occupée par les stocks cibles : <b>${M.slotsUsed}</b> / ${state.settings.slots} emplacements. Cible auto pilotée par les ventes : crafts qui se vendent → ventes/jour × ${state.settings.horizon||7} j ; crafts sans historique → ${state.settings.depth/2} crafts × facteur d'obtention ; crafts à perte ou qui s'écoulent mal → 0. En piles pleines ; si la place manque, les piles qui rapportent le moins d'or par jour sont retirées d'abord. Survolez une cible pour sa raison. Champ vide = auto ; bordure orange = cible manuelle. Tag Montée « A / B » : A = besoin des 2 prochaines étapes de montée (acheté et compté dans la place), B = besoin total jusqu'à 300 (info, pas stocké d'avance). <a href="#reglages">Réglages</a></div>
   <p class="muted">Listes Auctionator (suivi et réassort) : onglet <a href="#import">Comptoir</a>.</p>
   <div class="tw scroll"><table><thead><tr>
-    ${th("stock","n","Composant")}${th("stock","cur","Prix actuel","r")}${th("stock","advQty","Conseil")}${th("stock","med","Médiane 30 j","r")}${th("stock","delta","Écart","r")}<th>Signal</th>${th("stock","bestOrd","Meilleur jour d'achat")}<th>Obtention</th><th class="r">Stock</th><th class="r" title="Vide = cible auto ; saisie = cible manuelle">Cible</th><th class="r" title="Emplacements occupés par la cible (taille de pile)">Piles</th>${th("stock","toBuy","À acheter","r")}${th("stock","refill","Coût réassort","r")}
+    ${th("stock","n","Composant")}${th("stock","cur","Prix actuel","r")}${th("stock","advQty","Conseil")}${th("stock","med","Médiane 30 j","r")}${th("stock","delta","Écart","r")}<th>Signal</th>${th("stock","bestOrd","Meilleur jour d'achat")}<th>Obtention</th><th class="r">Stock</th>${th("stock","value","Valeur du stock","r")}<th class="r" title="Vide = cible auto ; saisie = cible manuelle">Cible</th><th class="r" title="Emplacements occupés par la cible (taille de pile)">Piles</th>${th("stock","toBuy","À acheter","r")}${th("stock","refill","Coût réassort","r")}
   </tr></thead><tbody>
   ${rows.map(c => `<tr><td class="click" data-comp="${esc(c.n)}" role="button" tabindex="0" style="cursor:pointer" title="Voir l'évolution du prix">${esc(c.n)}${c.age===null && c.vend===null ? NODOT("Absent du dernier export : prix de la liste de départ ou de test, pas un relevé réel") : ""}${c.res ? ` <span class="st" style="color:var(--info);border-color:var(--info)" title="Réservé : ${esc([...c.res.why].join(", "))}${c.res.prod?` · ${c.res.prod} produits par le plan`:""}">Montée ${c.res.nearNet}${c.res.net > c.res.nearNet ? ` / ${c.res.net}` : ""}</span>` : ""}</td><td class="r">${c.vend!==null ? `<span title="Prix marchand PNJ relevé par Gringotts, utilisé comme prix d'achat">PNJ ${money(c.vend)}</span>` : money(c.cur)}${c.stale!==null ? ` <span class="st warn" title="Dernier relevé Auctionator il y a ${c.stale} jours">${c.stale} j</span>` : ""}</td>${compAdvCell(c)}<td class="r">${money(c.med)}</td><td class="r">${pct(c.delta)}</td><td>${stPill(c.sig,c.sigTxt)}</td><td>${dayCell(c.bestDay)}</td><td class="muted">${OBT[c.ob]||"—"}</td>
     <td class="r"><input class="num" type="number" min="0" step="1" data-stock="${esc(c.n)}" value="${c.stock}" aria-label="Stock ${esc(c.n)}"></td>
+    <td class="r">${c.stock > 0 ? money(c.value) : "—"}</td>
     <td class="r"><input class="num" type="number" min="0" step="1" data-target="${esc(c.n)}" value="${c.manualT ? c.target : ""}" placeholder="${c.autoT}" aria-label="Cible ${esc(c.n)}" title="${c.manualT ? "Cible manuelle (videz pour revenir à l'auto : "+c.autoT+")" : "Cible auto" + (c.why ? " — " + c.why : "")}" style="${c.manualT?"border-color:var(--warn)":""}"></td>
     <td class="r muted">${c.target ? `${Math.ceil(c.target/c.st)} × ${c.st}` : "—"}</td>
-    <td class="r">${c.toBuy}</td><td class="r">${money(c.refill)}</td></tr>`).join("") || `<tr><td colspan="13" class="empty">Aucun composant ne correspond.</td></tr>`}
+    <td class="r">${c.toBuy}</td><td class="r">${money(c.refill)}</td></tr>`).join("") || `<tr><td colspan="14" class="empty">Aucun composant ne correspond.</td></tr>`}
   </tbody></table></div>
   <h2>Produits finis à garder en stock (${M.prodRows.length})</h2>
   ${M.prodRows.length ? `<div class="tw scroll"><table><thead><tr><th>Produit</th><th class="r">Ventes / jour (30 j)</th><th class="r">Stock</th><th class="r">Cible (${state.settings.horizon||7} j)</th><th class="r">Piles</th><th class="r">Crafts à lancer</th></tr></thead><tbody>
