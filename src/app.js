@@ -318,7 +318,7 @@ const invalidateAll = () => { _allc = {}; };
 const extList = () => Object.values((state.ext && state.ext.recipes) || {});
 const ALL_RECIPES = () => _allc.recipes ||= SEED.recipes.concat(extList().map(x => ({n:x.n, k:x.k, job:x.job, sk:null, src:"Export Gringotts", z:"—",
   d: x.out && norm(x.out)!==norm(x.n) ? "Produit : "+x.out : "", l:true, t:x.r.length>0, nc:!x.r.length, auto:true})));
-const ALL_CRAFTS = () => _allc.crafts ||= SEED.crafts.concat(extList().filter(x => x.k==="craft" && x.r.length).map(x => ({n:x.n, r:x.r, out:x.out||x.n, qty:x.q||1, l:true, auto:true})));
+const ALL_CRAFTS = () => _allc.crafts ||= SEED.crafts.concat(extList().filter(x => x.k==="craft" && x.r.length).map(x => ({n:x.n, r:x.r, out:x.out||x.n, outUnknown:!x.out, qty:x.q||1, l:true, auto:true})));
 const ALL_ENCH = () => _allc.ench ||= SEED.ench.concat(extList().filter(x => x.k==="ench" && x.r.length).map(x => ({n:x.n, cat:"Auto (export)", price:null, r:x.r, l:true, auto:true})));
 const ALL_HV = () => _allc.hv ||= (() => { const seen = new Set(SEED.hvStock.map(x => norm(x.n))); SEED.pnj.forEach(x => seen.add(norm(x.n)));
   const extra = []; extList().forEach(x => x.r.map(r => r[0]).forEach(n => { const k = norm(n); if (!seen.has(k)) { seen.add(k); extra.push({n, stock:0}); } }));
@@ -880,7 +880,7 @@ views.enchant = () => {
 // Tous les objets à surveiller à l'HV : composants (hors fournitures PNJ) + produits des crafts
 const trackList = () => { const pnj = new Set(SEED.pnj.map(x => norm(x.n))), seen = new Set(), out = [];
   const add = n => { const k = norm(n); if (!n || pnj.has(k) || seen.has(k)) return; seen.add(k); out.push(n); };
-  M.comps.forEach(c => add(c.n)); ALL_CRAFTS().forEach(c => add(c.out || c.n));
+  M.comps.forEach(c => add(c.n)); ALL_CRAFTS().forEach(c => { if (!c.outUnknown) add(c.out || c.n); });
   return out.sort((a,b) => a.localeCompare(b, "fr")); };
 const auctionatorList = (name, items) => name + "^" + items.map(n => `"${n}"`).join("^");
 // Cellule « Conseil » du stock : quantité à acheter ou à vendre, selon le signal de prix et la direction à 7 jours
