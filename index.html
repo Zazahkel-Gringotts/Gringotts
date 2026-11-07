@@ -1015,7 +1015,7 @@ views.controle = () => {
   <h2>Priorités</h2>
   ${prio.length ? `<div class="prios">${prio.map(t => `<div class="tw prio"><div class="prh"><span class="st ${t.prio}">${t.n}</span><b>${t.title}</b></div><div class="prs">${t.sum}</div><div><button class="btn" data-goto-dec="${t.i}">Détail au Comptoir →</button></div></div>`).join("")}</div>`
     : `<div class="tw empty">Rien d'urgent : aucune action en attente.</div>`}
-  <p class="muted" style="margin:8px 0 0">Toutes les décisions : <a href="#import" data-goto-dec="">Comptoir, étape 5</a>.${flagged.length ? ` ${flagged.length} craft${flagged.length>1?"s ont":" a"} une alerte de données (⚠) : <a href="#crafts">Crafts</a>.` : ""}</p>
+  <p class="muted" style="margin:8px 0 0">Toutes les décisions : <a href="#import" data-goto-dec="">Comptoir, étape 3</a>.${flagged.length ? ` ${flagged.length} craft${flagged.length>1?"s ont":" a"} une alerte de données (⚠) : <a href="#crafts">Crafts</a>.` : ""}</p>
   <div class="cols">
     <section><h2>Top 5 crafts — bénéfice net par craft</h2>
       ${top.length ? `<div class="tw" style="padding:14px 16px 6px">${top.map(c => `
@@ -1556,8 +1556,8 @@ function logistics(){
   }));
   return {moves, short, ok:true};
 }
-// ---------- Rapport de décisions (étape 5 de la session) ----------
-let decOpen = null;   // tuile de décision ouverte (étape 5)
+// ---------- Rapport de décisions (étape 3 de la session) ----------
+let decOpen = null;   // tuile de décision ouverte (étape 3)
 // Composants des recettes rentables dont le prix s'écarte de la médiane 30 j d'au moins le seuil du signal d'achat
 function priceWatch(){
   const used = new Set(); M.crafts.filter(c => c.learned && c.st==="ok").forEach(c => c.lines.forEach(l => used.add(norm(l.n))));
@@ -1613,9 +1613,9 @@ function decisionBlocks(){
   ${(() => { const LG = logistics(); return sec("info", "Envois entre persos", LG.moves.length,
      !LG.ok ? `<span class="muted">Stock par perso inconnu : il faut l'addon ${MIN_ADDON} ou plus.</span>` :
      tbl(["De","À","Objet",">Qté"], LG.moves.map(m => `<tr><td>${esc(m.from)}</td><td>${esc(m.to)}</td><td>${esc(m.n)}</td><td class="r">${m.q}</td></tr>`)) +
-     `<p class="muted" style="margin:6px 0 0">Composants nécessaires au perso qui craft (crafts à produire + étape de montée en cours). Après l'étape 6 : bouton « Gringotts : préparer l'envoi » à la boîte aux lettres du perso expéditeur ; rappel des retraits à l'ouverture de la banque de guilde.${LG.short.length ? ` Manquants partout (à acheter) : ${LG.short.slice(0,8).map(x => `${esc(x.n)} ×${x.q}`).join(", ")}.` : ""}</p>`); })()}
+     `<p class="muted" style="margin:6px 0 0">Composants nécessaires au perso qui craft (crafts à produire + étape de montée en cours). Après l'étape 4 : bouton « Gringotts : préparer l'envoi » à la boîte aux lettres du perso expéditeur ; rappel des retraits à l'ouverture de la banque de guilde.${LG.short.length ? ` Manquants partout (à acheter) : ${LG.short.slice(0,8).map(x => `${esc(x.n)} ×${x.q}`).join(", ")}.` : ""}</p>`); })()}
   ${sec("info", "Acheter", buy.length + opp.filter(c => !c.toBuy).length,
-     (buy.length ? `<p style="margin:0 0 4px">Réassort : <b>${buy.length}</b> composants pour <b>${money(refill)}</b> (liste « Gringotts - Réassort » après l'étape 6).${dear.length ? ` <span class="st warn">${dear.length} trop cher(s) : à reporter</span>` : ""}</p>` +
+     (buy.length ? `<p style="margin:0 0 4px">Réassort : <b>${buy.length}</b> composants pour <b>${money(refill)}</b> (liste « Gringotts - Réassort » après l'étape 4).${dear.length ? ` <span class="st warn">${dear.length} trop cher(s) : à reporter</span>` : ""}</p>` +
        tbl(["Composant",">Qté",">Prix actuel","Signal",">Coût"], buy.slice(0,10).map(c => `<tr><td>${esc(c.n)}${c.res ? ` <span class="muted">· montée</span>` : ""}</td><td class="r">${c.toBuy}</td><td class="r">${money(c.cur)}</td><td>${stPill(c.sig,c.sigTxt)}</td><td class="r">${money(c.refill)}</td></tr>`)) : "") +
      (opp.length ? `<p style="margin:10px 0 4px"><b>Opportunités</b> (≥ ${pct(S.buyTh)} sous la médiane 30 j) : acheter au-delà de la cible si la place le permet.</p><p class="muted" style="margin:0">${opp.slice(0,10).map(c => `${esc(c.n)} ${pct(c.delta)}`).join(", ")}</p>` : ""), "stock")}
   ${(() => { const W = priceWatch(); return sec("info", "Prix à surveiller", W.rows.length,
@@ -1655,29 +1655,15 @@ function decisionReport(){
 const stepH = (n, t) => `<h2 style="display:flex;align-items:center;gap:10px"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--bg);font-size:14px">${n}</span>${t}</h2>`;
 views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0).length; return `
   <h1>Comptoir <span class="muted" style="font-size:.6em;font-weight:400">· Routine de session</span></h1>
-  <p class="lede">Routine du jour, dans l'ordre : jouer → se déconnecter → un seul envoi → décisions → retour dans le jeu. L'addon relève sacs et or toutes les minutes et prépare l'export à la déconnexion : le dernier perso déconnecté exporte tous les persos du compte (addon 1.12.5 ou plus). Plus de <code>/gt sync</code> à taper.</p>
+  <p class="lede">Routine du jour, dans l'ordre : envoi des données et des prix → synchro → décisions → fichier pour le jeu → jouer. Le jeu doit être fermé (ou le dernier perso déconnecté) au moment de l'envoi : l'addon écrit les données à la déconnexion, le dernier perso déconnecté exporte tous les persos (addon 1.12.5 ou plus). Aucune commande en jeu.</p>
 
   <div class="impgrid">
   <div class="impcol">
-  ${stepH(1, "Persos de jeu : jouer puis se déconnecter")}
-  <div class="tw" style="padding:12px 16px"><ul style="margin:0;padding-left:18px;line-height:1.7">
-    <li>Se connecter sur chaque perso qui a bougé (sacs relevés automatiquement), jouer, puis le <b>déconnecter</b> (ou <code>/reload</code>) : c'est ce qui écrit ses données (stock, or, niveaux). Un perso sans changement reste déconnecté.</li>
-    <li>Ce qu'un perso gagne <b>après</b> sa déconnexion n'est pas dans l'export : il sera relevé à la routine suivante.</li>
-    <li>Un perso avec métiers : ouvrir ses <b>fenêtres de métier</b> avant de se déconnecter (recettes, temps de recharge, niveaux).</li>
-    <li>La liste Auctionator <b>« Gringotts - Suivi »</b> est créée par l'addon à la connexion.</li>
-  </ul></div>
-  <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Suivi » (${trackList().length} objets)</summary>
-    <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
-    <div id="trackOut"></div></details>
+  ${stepH(1, "Bureau : Routine.bat")}
+  <p class="muted" style="margin-top:0">Double-clique <b>Routine.bat</b> : il lance <b>Envoyer.bat</b> (stock, or, recettes, niveaux et ventes de ta dernière session, tous persos) puis <b>Prix-API.bat</b> (prix de l'HV via l'API Blizzard, plus de scan en jeu). Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi. Les deux .bat restent utilisables séparément ; Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix.</p>
 
-  ${stepH(2, "Perso banque en dernier : relevés et export")}
-  <p class="muted" style="margin-top:0">Connecter le perso banque <b>en dernier</b> : ouvrir la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> (ventes, achats, expirés). Attendre environ une minute après la connexion, puis se <b>déconnecter</b> : l'export est écrit à la déconnexion, sans <code>/gt sync</code>. En cas de doute, <code>/gt status</code> doit afficher « Dernier export : il y a n min (logout) ». <b>Plus de scan HV</b> : les prix viennent de l'API Blizzard (étape 3).</p>
-
-  ${stepH(3, "Bureau : Envoyer.bat et Prix-API.bat")}
-  <p class="muted" style="margin-top:0">Lance <b>Envoyer.bat</b> une fois le dernier perso joué <b>déconnecté</b> : un seul envoi suffit, il contient tous les persos (stock, or, recettes, niveaux). Lance ensuite <b>Prix-API.bat</b> : il récupère les prix de l'HV via l'API Blizzard et les envoie. Prix-API.bat peut être relancé à tout moment pour rafraîchir les prix, sans rien faire en jeu. Tout part chiffré vers GitHub. « Export inchangé » = rien de nouveau depuis le dernier envoi.</p>
-
-  ${stepH(4, "Dashboard : synchroniser")}
-  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta session.</p>
+  ${stepH(2, "Dashboard : synchroniser")}
+  <p class="muted" style="margin-top:0">Le bouton <b>↻ Synchroniser</b> (menu de gauche) récupère le dernier export (stock total, recettes, niveaux, ventes, or, temps de recharge) et les derniers prix API. Il se lance aussi tout seul à l'ouverture. Vérifie que l'heure de l'export ci-dessous est celle de ta dernière session.</p>
   ${(() => { const c = readSync(); return c.report ? `<details open><summary>Dernier export reçu (synchronisation du ${new Date(c.lastOk).toLocaleString("fr-FR")})</summary>${c.report}</details>` : `<div class="note">Aucun export reçu par synchronisation sur cet appareil.</div>`; })()}
   ${state.apiLast ? `<div class="note ok">Prix API (HV ${esc(state.apiLast.ah)}) : ${state.apiLast.n} prix du ${new Date(state.apiLast.t*1000).toLocaleString("fr-FR")}.</div>` : `<div class="note">Aucun prix API reçu : lance <b>Prix-API.bat</b> sur le PC.</div>`}
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : coller un export à la main (<code>/gt export</code> ou CSV Auctionator)</summary>
@@ -1687,31 +1673,33 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
 
   </div>
   <div class="impcol">
-  ${stepH(5, "Décider")}
-  <p class="muted" style="margin-top:0">Rapport du dernier import, par priorité : cliquez une tuile pour son détail. Les corrections (cibles, stocks) se font dans <a href="#stock">Stock &amp; achats</a> et changent le fichier de l'étape 6.</p>
+  ${stepH(3, "Décider")}
+  <p class="muted" style="margin-top:0">Rapport du dernier import, par priorité : cliquez une tuile pour son détail. Les corrections (cibles, stocks) se font dans <a href="#stock">Stock &amp; achats</a> et changent le fichier de l'étape 4.</p>
   ${histNote()}${decisionReport()}
 
-  ${stepH(6, "Renvoyer les décisions au jeu")}
-  <p class="muted" style="margin-top:0">Clique <b>Télécharger Dash.lua</b>, puis lance <b>Appliquer.bat</b> (il copie le fichier dans l'addon). Sur le perso que tu joues : <code>/reload</code>. Le chat affiche « Décisions du dashboard détectées… ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créées automatiquement.</p>
+  ${stepH(4, "Fichier pour le jeu : Dash.lua")}
+  <p class="muted" style="margin-top:0">Clique <b>Télécharger Dash.lua</b>, puis lance <b>Appliquer.bat</b> (il copie le fichier dans l'addon). Le jeu lit le fichier à la connexion : <b>plus de <code>/reload</code></b> si le jeu était fermé (s'il tournait déjà, <code>/reload</code> sur le perso en cours). Le chat affiche « Décisions du dashboard détectées… ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créées automatiquement.</p>
   <div class="toolbar"><button class="btn primary" id="dashDl" title="Télécharge Dash.lua ; Appliquer.bat le copie dans Interface\\AddOns\\Gringotts">Télécharger Dash.lua</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit Dash.lua directement dans le dossier de l'addon (si le navigateur l'autorise)">→ Envoyer à l'addon (fichier local)</button>` : ""}</div>
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : texte à coller en jeu (<code>/gt import</code>)</summary>
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="gameBtn">Générer le texte pour le jeu</button></div>
     <div id="gameOut"></div></details>
 
-  ${stepH(7, "Achats, crafts, ventes")}
-  <p class="muted" style="margin-top:0">Rechercher « Gringotts - Réassort » dans Auctionator (${toBuyN} composant${toBuyN>1?"s":""} à acheter), crafter, mettre en vente.</p>
+  ${stepH(5, "Jouer : achats, crafts, ventes")}
+  <p class="muted" style="margin-top:0">Se connecter, rechercher « Gringotts - Réassort » dans Auctionator (${toBuyN} composant${toBuyN>1?"s":""} à acheter), crafter, mettre en vente. Ouvrir les <b>fenêtres de métier</b> (recettes, temps de recharge, niveaux), la <b>banque</b>, la <b>banque de guilde</b> et la <b>boîte aux lettres</b> pour qu'elles soient relevées ; attendre environ une minute après la connexion avant de se déconnecter. Ce que tu gagnes après ta déconnexion sera dans la routine suivante. Un perso sans changement reste déconnecté.</p>
   <details><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Réassort »</summary>
     <div class="toolbar" style="margin-top:8px"><button class="btn" id="shopBtn"${toBuyN?"":" disabled"}>Générer la liste du réassort (${toBuyN})</button></div>
     <div id="shopOut"></div></details>
+  <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : l'addon ne crée pas la liste « Gringotts - Suivi » (${trackList().length} objets)</summary>
+    <div class="toolbar" style="margin-top:8px"><button class="btn" id="trackBtn">Générer la liste de suivi</button></div>
+    <div id="trackOut"></div></details>
 
-  
   </div>
   </div>
   <details class="impmore"><summary class="muted" style="cursor:pointer">Historique des imports et remise à zéro</summary>
   <h2>Historique des imports</h2>
   ${Object.keys(state.imports).length ? `<div class="tw"><table><thead><tr><th>Date</th><th class="r">Articles</th><th></th></tr></thead><tbody>
   ${Object.keys(state.imports).sort().reverse().map(d=>`<tr><td>${fmtDate(d)}${(state.compacted||{})[d] ? ` <span class="st mute" title="Médiane des relevés de la semaine de reset (historique ancien regroupé)">semaine</span>` : ""}</td><td class="r">${Object.keys(state.imports[d]).length}</td><td class="r"><button class="btn" data-delimp="${d}">Supprimer</button></td></tr>`).join("")}
-  </tbody></table></div>` : `<div class="tw empty">${state.priceReset ? "Aucun prix enregistré. Collez votre premier export à l'étape 4 (secours)." : `Aucun import pour l'instant : les prix affichés sont les données de test du classeur (${SEED.dates.length} jours, jusqu'au ${fmtDate(SEED.dates[SEED.dates.length-1])}).`}</div>`}
+  </tbody></table></div>` : `<div class="tw empty">${state.priceReset ? "Aucun prix enregistré. Collez votre premier export à l'étape 2 (secours)." : `Aucun import pour l'instant : les prix affichés sont les données de test du classeur (${SEED.dates.length} jours, jusqu'au ${fmtDate(SEED.dates[SEED.dates.length-1])}).`}</div>`}
   <h2>Repartir de zéro</h2>
   ${state.priceReset
     ? `<div class="note ok">Historique remis à zéro : seuls vos imports comptent. Les prix PNJ restent appliqués.</div>
