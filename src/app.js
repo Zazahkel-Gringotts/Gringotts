@@ -1437,10 +1437,10 @@ views.import = () => { const toBuyN = M.comps.filter(c => c.used && c.toBuy > 0)
   ${histNote()}${decisionReport()}
 
   ${stepH(4, "Fichier pour le jeu : Dash.lua")}
-  <p class="muted" style="margin-top:0">Clique <b>Télécharger Dash.lua</b>, puis lance <b>Appliquer.bat</b> (il copie le fichier dans l'addon). Le jeu lit le fichier à la connexion : <b>plus de <code>/reload</code></b> si le jeu était fermé (s'il tournait déjà, <code>/reload</code> sur le perso en cours). Le chat affiche « Décisions du dashboard détectées… ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créées automatiquement.</p>
-  <div class="toolbar"><button class="btn primary" id="dashDl" title="Télécharge Dash.lua ; Appliquer.bat le copie dans Interface\\AddOns\\Gringotts">Télécharger Dash.lua</button>${CAN_FS ? `<button class="btn" id="dashBtn" title="Écrit Dash.lua directement dans le dossier de l'addon (si le navigateur l'autorise)">→ Envoyer à l'addon (fichier local)</button>` : ""}</div>
+  <p class="muted" style="margin-top:0">${CAN_FS ? "Clique <b>Envoyer à l'addon</b> : le dashboard écrit <code>Dash.lua</code> directement dans <code>Interface\\AddOns\\Gringotts</code> (le dossier n'est demandé qu'à la première fois). Si Chrome refuse le dossier (ex. Program Files), le fichier est téléchargé : lance alors <b>Appliquer.bat</b>." : "Clique <b>Télécharger Dash.lua</b>, puis lance <b>Appliquer.bat</b> (il copie le fichier dans l'addon). L'envoi direct demande Chrome ou Edge sur PC."} Le jeu lit le fichier à la connexion : <b>plus de <code>/reload</code></b> si le jeu était fermé (s'il tournait déjà, <code>/reload</code> sur le perso en cours). Le chat affiche « Décisions du dashboard détectées… ». Contour rouge sur les composants réservés, infobulle (stock, cible, prix max, marge, ventes) et liste Auctionator « Gringotts - Réassort » créées automatiquement.</p>
+  <div class="toolbar">${CAN_FS ? `<button class="btn primary" id="dashBtn" title="Écrit Dash.lua directement dans le dossier de l'addon">→ Envoyer à l'addon</button>` : `<button class="btn primary" id="dashDl" title="Télécharge Dash.lua ; Appliquer.bat le copie dans Interface\\AddOns\\Gringotts">Télécharger Dash.lua</button>`}</div>
   <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">Secours : texte à coller en jeu (<code>/gt import</code>)</summary>
-    <div class="toolbar" style="margin-top:8px"><button class="btn" id="gameBtn">Générer le texte pour le jeu</button></div>
+    <div class="toolbar" style="margin-top:8px">${CAN_FS ? `<button class="btn" id="dashDl" title="Télécharge Dash.lua ; Appliquer.bat le copie dans Interface\\AddOns\\Gringotts">Télécharger Dash.lua</button>` : ""}<button class="btn" id="gameBtn">Générer le texte pour le jeu</button></div>
     <div id="gameOut"></div></details>
 
   ${stepH(5, "Jouer : achats, crafts, ventes")}
@@ -2164,7 +2164,6 @@ function initSync(){
     if (t === "ghTokDel") { try { localStorage.removeItem(GH_TOK_LS); } catch(x) {} refreshRefBtn(); toast("Jeton supprimé"); render(); }
   });
   document.getElementById("syncBtn").addEventListener("click", () => syncNow({manual:true}));
-  const ab = document.getElementById("addonBtn"); if (ab) { ab.hidden = !CAN_FS; ab.addEventListener("click", sendToAddon); }
   document.getElementById("lockSkip").addEventListener("click", e => { e.preventDefault(); sessSet(SYNC_LS+"-skip", "1"); hideLock(); });
   document.getElementById("lockForm").addEventListener("submit", async e => {
     e.preventDefault(); const pw = document.getElementById("lockPw").value; if (!pw) return;
