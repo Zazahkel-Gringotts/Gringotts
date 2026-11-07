@@ -1879,6 +1879,7 @@ function linesTable(lines){
   ${lines.map(l=>`<tr><td>${esc(l.n)}</td><td class="r">${l.q}</td><td class="r">${money(l.p)}</td><td class="muted">${l.src}</td><td class="r">${money(l.tot)}</td></tr>`).join("")}</tbody></table>`;
 }
 function openDrawer(html){ const d = document.getElementById("drawer"); document.getElementById("dBody").innerHTML = html;
+  d.querySelectorAll("[data-craft],[data-ench]").forEach(el => el.addEventListener("click", e => { e.preventDefault(); if (el.dataset.craft) openCraft(el.dataset.craft); else openEnch(el.dataset.ench); }));
   d.querySelectorAll("[data-planchoice]").forEach(el => el.addEventListener("change", () => {
     const [job, from] = el.dataset.planchoice.split("|"); state.planChoice = state.planChoice || {};
     if (el.value === "auto") delete state.planChoice[`${job}|${from}`]; else state.planChoice[`${job}|${from}`] = +el.value;
@@ -1923,6 +1924,17 @@ function openCraft(name){
     <h2>Composants</h2>${linesTable(c.lines)}
     <h2>Prix de vente sur la période</h2>${spark(c.hist)}`);
 }
+function usedBy(name){
+  const k = norm(name), out = [];
+  M.crafts.forEach(c => { const l = c.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"craft", n:c.n, q:l.q, st:c.st, net:c.net, roi:c.roi, learned:c.learned!==false, act:c.act}); });
+  M.ench.forEach(e => { const l = e.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"ench", n:e.n, q:l.q, st:e.st, net:e.net, roi:e.roi, learned:e.learned!==false}); });
+  return out.sort((a, b) => (b.net===null)-(a.net===null) || (b.net||0)-(a.net||0));
+}
+function usedByTable(list){
+  if (!list.length) return `<p class="muted">Aucune recette n'utilise ce composant.</p>`;
+  return `<table class="steps"><thead><tr><th>Craft</th><th class="r">Qté</th><th>Statut</th><th class="r">Bénéfice net</th><th class="r">ROI</th></tr></thead><tbody>
+  ${list.map(u => `<tr><td><a href="#" data-${u.kind==="craft"?"craft":"ench"}="${esc(u.n)}">${esc(u.n)}</a>${u.kind==="ench" ? ` <span class="muted">(enchant.)</span>` : ""}${u.learned ? "" : ` <span class="muted">(non appris)</span>`}</td><td class="r">${u.q}</td><td>${stPill(u.st)}</td><td class="r">${money(u.net)}</td><td class="r">${roiTxt(u.roi)}</td></tr>`).join("")}</tbody></table>`;
+}
 function openComp(name){
   const c = M.comps.find(x => x.n===name); if (!c) return;
   const PM = priceModel(), k = norm(c.n), h = c.hist || [], dates = PM.dates;
@@ -1931,6 +1943,7 @@ function openComp(name){
   const last30 = h.filter((v,i) => v !== null && PM.dd.age[i] < 30);
   const lo = last30.length ? Math.min(...last30) : null, hi = last30.length ? Math.max(...last30) : null;
   const recent = vals.slice(-14).reverse();
+  const UB = usedBy(c.n);
   const dlt = c.delta===null || c.delta===undefined ? "—" : (c.delta>0?"+":"") + pct(c.delta);
   openDrawer(`<h3 id="dTitle">${esc(c.n)}</h3>
     <p style="margin:6px 0 0">${c.sigTxt ? `<span class="st ${c.sig}">${esc(c.sigTxt)}</span> ` : ""}<span class="muted">· ${c.used ? "utilisé par mes recettes" : "hors de mes recettes"}${c.vend!==null ? " · prix marchand" : ""}</span></p>
@@ -1947,6 +1960,7 @@ function openComp(name){
     <h2>Évolution du prix</h2>${spark(h)}
     <h2>Semaine type (mercredi → mardi)</h2>
     ${prof ? `<p class="muted" style="margin-top:-4px">Écart moyen au prix moyen de la semaine, sur ${prof.weeks} semaine(s). Encadré : jour le moins cher.</p>${weekStrip(prof.prof, "min", "Achat du composant")}` : `<p class="muted">Pas assez de semaines complètes (minimum ${state.settings.minWeeks||3}).</p>`}
+    <h2>Crafts qui l'utilisent (${UB.length})</h2>${usedByTable(UB)}
     <h2>Stock</h2>
     <table class="steps"><tbody>
       <tr><td>En stock / cible</td><td class="r">${c.stock} / ${c.target}</td></tr>
