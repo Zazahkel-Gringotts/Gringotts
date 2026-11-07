@@ -495,7 +495,7 @@ function Run-Prices {
     Gh-Put $cfg $token "data/index.json" ('{{"t":{0},"days":[{1}]}}' -f $t, (($days | ForEach-Object { '"' + $_ + '"' }) -join ",")) "index"
   }
   Log ("Prix API envoyés : {0} prix (HV {1}) sur {2} objets connus." -f $pl.Count, $ah, $ids.Count)
-  if ($rlog.Count -gt 0) { Log (($rlog | Where-Object { $_ -like "Recherche*" } | Select-Object -Last 1)) }
+  $rl = @($rlog | Where-Object { $_ -like "Recherche*" } | Select-Object -Last 1); if ($rl.Count -gt 0 -and $rl[0]) { Log $rl[0] }
 }
 
 # ---------- Tâche planifiée : relevé quotidien des prix de l'HV ----------
