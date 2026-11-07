@@ -10,6 +10,7 @@
     -Unschedule supprime cette tâche
     -Compare   compare les prix de ton dernier export aux HV de l'API Blizzard (identifie ton HV)
     -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
+    -Open      avec -Once : ouvre le dashboard dans le navigateur une fois l'envoi terminé (Demarrer.bat)
     -ApplyAuto surveille Downloads et ce dossier : tout Dash*.lua est copié dans l'addon aussitôt (Appliquer-Auto.bat)
     -ApplyAutoOn / -ApplyAutoOff  crée / supprime la tâche « Gringotts - Dash auto » (lancée à l'ouverture de session)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
@@ -22,6 +23,7 @@ param(
   [switch]$Watch,
   [switch]$Once,
   [switch]$Apply,
+  [switch]$Open,
   [switch]$ApplyAuto,
   [switch]$ApplyAutoOn,
   [switch]$ApplyAutoOff,
@@ -620,5 +622,9 @@ if ($Once -or $OutDir -or (-not $Watch)) {
   if ($env:GT_PASS) { $pass = $env:GT_PASS }
   if (-not $pass) { throw "Mot de passe absent : lance Installer.bat (ou définis GT_PASS pour un test)." }
   [void](Sync-Once $cfg $token $pass)
+  if ($Open) {
+    $r = [string]$cfg.repo; $parts = $r.Split("/")
+    if ($parts.Count -eq 2) { Start-Process ("https://{0}.github.io/{1}/" -f $parts[0].ToLower(), $parts[1]) }
+  }
   return
 }
