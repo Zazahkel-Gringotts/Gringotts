@@ -2,8 +2,9 @@ name: Prix de l'HV
 
 on:
   schedule:
-    # UTC : 06h/07h = 8h Paris (été/hiver), 10h/11h = 12h, 17h/18h = 19h. Le script ne garde que les heures de Paris voulues.
-    - cron: "7 6,7,10,11,17,18 * * *"
+    # Toutes les heures de 6h07 à 18h07 UTC : le script ne travaille que s'il manque le relevé du dernier créneau (8h/12h/19h Paris).
+    # Un cron retardé par GitHub ne fait donc plus rater un créneau ; les passages inutiles durent ~10 s.
+    - cron: "7 6-18 * * *"
   workflow_dispatch:
 
 permissions:

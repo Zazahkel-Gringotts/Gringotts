@@ -6,7 +6,7 @@ Lancé par GitHub Actions (.github/workflows/prix-hv.yml) à 8h, 12h et 19h (heu
 ids-introuvables.json, et ajoute le jour à index.json. Les prix de l'HV sont publics : fichiers non chiffrés.
 
 Variables : BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET (secrets du repo) ; GT_AH (HV, défaut 110) ;
-GITHUB_EVENT_NAME (schedule -> ne tourne qu'aux heures prévues).
+GITHUB_EVENT_NAME (schedule -> ne tourne que si le dernier créneau 8h/12h/19h n'a pas encore de relevé).
 """
 import base64, json, os, sys, time, unicodedata, urllib.parse, urllib.request
 from datetime import datetime
@@ -76,9 +76,21 @@ def search_ids(tok, name):
 def main():
     event = os.environ.get("GITHUB_EVENT_NAME", "")
     paris = datetime.now(ZoneInfo("Europe/Paris"))
-    if event == "schedule" and paris.hour not in HOURS:
-        print(f"Heure de Paris {paris:%H:%M} : hors des créneaux {HOURS}, rien à faire.")
-        return 0
+    if event == "schedule":
+        # GitHub retarde souvent les crons : on ne vise pas une heure exacte, on rattrape le dernier créneau du jour non encore servi.
+        slots = [h for h in HOURS if h <= paris.hour]
+        if not slots:
+            print(f"Heure de Paris {paris:%H:%M} : avant le premier créneau {HOURS[0]} h, rien à faire.")
+            return 0
+        slot = paris.replace(hour=max(slots), minute=0, second=0, microsecond=0).timestamp()
+        last = 0
+        try:
+            last = int(open(os.path.join(DATA, "api-public.json"), encoding="utf-8").readline().split(";")[1])
+        except Exception:
+            pass
+        if last >= slot:
+            print(f"Créneau {max(slots)} h déjà servi (dernier relevé {datetime.fromtimestamp(last, ZoneInfo('Europe/Paris')):%H:%M}), rien à faire.")
+            return 0
     cid, sec = os.environ.get("BLIZZARD_CLIENT_ID", "").strip(), os.environ.get("BLIZZARD_CLIENT_SECRET", "").strip()
     if not cid or not sec:
         print("Secrets BLIZZARD_CLIENT_ID / BLIZZARD_CLIENT_SECRET absents.", file=sys.stderr)
