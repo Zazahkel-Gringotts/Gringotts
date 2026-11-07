@@ -10,6 +10,8 @@
     -Unschedule supprime cette tâche
     -Compare   compare les prix de ton dernier export aux HV de l'API Blizzard (identifie ton HV)
     -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
+    -ApplyAuto surveille Downloads et ce dossier : tout Dash*.lua est copié dans l'addon aussitôt (Appliquer-Auto.bat)
+    -ApplyAutoOn / -ApplyAutoOff  crée / supprime la tâche « Gringotts - Dash auto » (lancée à l'ouverture de session)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
     -OutDir X  écrit les fichiers chiffrés dans X au lieu de les envoyer (test hors ligne)
 
@@ -20,6 +22,9 @@ param(
   [switch]$Watch,
   [switch]$Once,
   [switch]$Apply,
+  [switch]$ApplyAuto,
+  [switch]$ApplyAutoOn,
+  [switch]$ApplyAutoOff,
   [switch]$Compare,
   [switch]$Prices,
   [switch]$Auto,
@@ -307,23 +312,70 @@ function Run-Setup {
 }
 
 # ---------- Application manuelle de Dash.lua (si le navigateur ne peut pas écrire dans le dossier de l'addon) ----------
-function Run-Apply {
+function Get-AddonDir {
   if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
   $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
   $i = $cfg.sv.IndexOf("\WTF\", [StringComparison]::OrdinalIgnoreCase)
   if ($i -lt 0) { throw "Chemin SavedVariables inattendu : $($cfg.sv)" }
   $addon = Join-Path $cfg.sv.Substring(0, $i) "Interface\AddOns\Gringotts"
   if (-not (Test-Path (Join-Path $addon "Gringotts.toc"))) { throw "Dossier de l'addon introuvable : $addon" }
+  return $addon
+}
+function Get-DownloadsDir {
   $dl = $null
   try { $dl = (New-Object -ComObject Shell.Application).NameSpace("shell:Downloads").Self.Path } catch {}
   if (-not $dl) { $dl = Join-Path $env:USERPROFILE "Downloads" }
-  $f = Get-ChildItem -Path $dl -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-  if (-not $f) { throw "Aucun Dash.lua dans $dl : clique d'abord sur « Télécharger Dash.lua » dans le dashboard." }
+  return $dl
+}
+# Copie le Dash*.lua le plus récent des dossiers donnés vers l'addon ; retourne $true si un fichier a été appliqué
+function Apply-Dash([string]$addon, [string[]]$dirs) {
+  $f = $null
+  foreach ($d in $dirs) {
+    $c = Get-ChildItem -Path $d -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($c -and (-not $f -or $c.LastWriteTime -gt $f.LastWriteTime)) { $f = $c }
+  }
+  if (-not $f) { return $false }
   Copy-Item -Path $f.FullName -Destination (Join-Path $addon "Dash.lua") -Force
-  Get-ChildItem -Path $dl -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+  foreach ($d in $dirs) { Get-ChildItem -Path $d -Filter "Dash*.lua" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue }
+  return $true
+}
+function Run-Apply {
+  $addon = Get-AddonDir; $dl = Get-DownloadsDir
+  if (-not (Apply-Dash $addon @($dl))) { throw "Aucun Dash.lua dans $dl : clique d'abord sur « Télécharger Dash.lua » dans le dashboard." }
   Log ("Dash.lua copié dans {0}. Tape /reload en jeu." -f $addon)
 }
-
+# Surveillance : dès qu'un Dash*.lua apparaît dans Téléchargements (ou dans le dossier du script), il est copié dans l'addon
+function Run-ApplyAuto {
+  $created = $false
+  $mtx = New-Object System.Threading.Mutex($true, "Global\GringottsDashAuto", [ref]$created)
+  if (-not $created) { Write-Host "Déjà en cours."; return }
+  $addon = Get-AddonDir; $dl = Get-DownloadsDir
+  $here = $PSScriptRoot; if (-not $here) { $here = Split-Path -Parent $MyInvocation.MyCommand.Path }
+  $dirs = @($dl, $here)
+  Log ("Dash auto : surveillance de {0} et {1} -> {2}" -f $dl, $here, $addon)
+  while ($true) {
+    try { if (Apply-Dash $addon $dirs) { Log "Dash.lua appliqué automatiquement. /reload en jeu si le jeu tourne." } }
+    catch { }     # fichier encore verrouillé par le navigateur : nouvel essai au tour suivant
+    Start-Sleep -Seconds 2
+  }
+}
+function Run-ApplyAutoOn {
+  [void](Get-AddonDir)      # échoue tôt si la configuration est absente
+  $ps1 = $PSCommandPath; if (-not $ps1) { $ps1 = $MyInvocation.MyCommand.Path }
+  $arg = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -ApplyAuto' -f $ps1
+  $act = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arg
+  $trg = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+  $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Seconds 0) -MultipleInstances IgnoreNew
+  [void](Register-ScheduledTask -TaskName "Gringotts - Dash auto" -Action $act -Trigger $trg -Settings $set -Description "Copie automatiquement le Dash.lua téléchargé depuis le dashboard dans l'addon Gringotts" -Force)
+  Start-ScheduledTask -TaskName "Gringotts - Dash auto"
+  Write-Host "Tâche « Gringotts - Dash auto » créée et démarrée : elle se lance à chaque ouverture de session, sans fenêtre."
+  Write-Host "Désormais : « Télécharger Dash.lua » dans le dashboard suffit, le fichier est copié dans l'addon en 2 secondes."
+}
+function Run-ApplyAutoOff {
+  Unregister-ScheduledTask -TaskName "Gringotts - Dash auto" -Confirm:$false -ErrorAction SilentlyContinue
+  try { Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like "*-ApplyAuto*" -and $_.ProcessId -ne $PID } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force } } catch {}
+  Write-Host "Tâche « Gringotts - Dash auto » supprimée et surveillance arrêtée."
+}
 
 # ---------- Comparaison export <-> API Blizzard (identifie ton HV) ----------
 function Run-Compare {
@@ -553,6 +605,9 @@ function Run-Watch {
 
 if ($Setup) { Run-Setup; return }
 if ($Apply) { Run-Apply; return }
+if ($ApplyAuto) { Run-ApplyAuto; return }
+if ($ApplyAutoOn) { Run-ApplyAutoOn; return }
+if ($ApplyAutoOff) { Run-ApplyAutoOff; return }
 if ($Compare) { Run-Compare; return }
 if ($Schedule) { Run-Schedule; return }
 if ($Unschedule) { Run-Unschedule; return }
