@@ -1925,15 +1925,21 @@ function openCraft(name){
     <h2>Prix de vente sur la période</h2>${spark(c.hist)}`);
 }
 function usedBy(name){
-  const k = norm(name), out = [];
-  M.crafts.forEach(c => { const l = c.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"craft", n:c.n, q:l.q, st:c.st, net:c.net, roi:c.roi, learned:c.learned!==false, act:c.act}); });
-  M.ench.forEach(e => { const l = e.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"ench", n:e.n, q:l.q, st:e.st, net:e.net, roi:e.roi, learned:e.learned!==false}); });
-  return out.sort((a, b) => (b.net===null)-(a.net===null) || (b.net||0)-(a.net||0));
+  const k = norm(name), out = [], un = [];
+  M.crafts.forEach(c => { const l = c.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"craft", n:c.n, q:l.q, st:c.st, net:c.net, roi:c.roi}); });
+  M.ench.forEach(e => { const l = e.lines.find(x => norm(x.n)===k); if (l) out.push({kind:"ench", n:e.n, q:l.q, st:e.st, net:e.net, roi:e.roi}); });
+  ALL_CRAFTS().forEach(c => { if (isLearned("craft", c.n)) return; const r = c.r.find(x => norm(x[0])===k); if (r) un.push({kind:"craft", n:c.n, q:r[1]}); });
+  ALL_ENCH().forEach(e => { if (isLearned("ench", e.n)) return; const r = e.r.find(x => norm(x[0])===k); if (r) un.push({kind:"ench", n:e.n, q:r[1]}); });
+  out.sort((a, b) => (b.net===null)-(a.net===null) || (b.net||0)-(a.net||0)); un.sort((a, b) => a.n.localeCompare(b.n, "fr"));
+  return {learned: out, unlearned: un};
 }
-function usedByTable(list){
-  if (!list.length) return `<p class="muted">Aucune recette n'utilise ce composant.</p>`;
-  return `<table class="steps"><thead><tr><th>Craft</th><th class="r">Qté</th><th>Statut</th><th class="r">Bénéfice net</th><th class="r">ROI</th></tr></thead><tbody>
-  ${list.map(u => `<tr><td><a href="#" data-${u.kind==="craft"?"craft":"ench"}="${esc(u.n)}">${esc(u.n)}</a>${u.kind==="ench" ? ` <span class="muted">(enchant.)</span>` : ""}${u.learned ? "" : ` <span class="muted">(non appris)</span>`}</td><td class="r">${u.q}</td><td>${stPill(u.st)}</td><td class="r">${money(u.net)}</td><td class="r">${roiTxt(u.roi)}</td></tr>`).join("")}</tbody></table>`;
+function usedByTable(u){
+  if (!u.learned.length && !u.unlearned.length) return `<p class="muted">Aucune recette connue n'utilise ce composant.</p>`;
+  const lnk = x => `<a href="#" data-${x.kind}="${esc(x.n)}">${esc(x.n)}</a>${x.kind==="ench" ? ` <span class="muted">(enchant.)</span>` : ""}`;
+  return (u.learned.length ? `<table class="steps"><thead><tr><th>Craft appris</th><th class="r">Qté</th><th>Statut</th><th class="r">Bénéfice net</th><th class="r">ROI</th></tr></thead><tbody>
+  ${u.learned.map(x => `<tr><td>${lnk(x)}</td><td class="r">${x.q}</td><td>${stPill(x.st)}</td><td class="r">${money(x.net)}</td><td class="r">${roiTxt(x.roi)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">Aucune recette apprise ne l'utilise.</p>`)
+  + (u.unlearned.length ? `<p class="muted" style="margin:10px 0 4px">Recettes non apprises</p><table class="steps" style="opacity:.7"><tbody>
+  ${u.unlearned.map(x => `<tr><td>${x.kind==="craft" ? esc(x.n) : esc(x.n) + ` <span class="muted">(enchant.)</span>`}</td><td class="r">${x.q}</td></tr>`).join("")}</tbody></table>` : "");
 }
 function openComp(name){
   const c = M.comps.find(x => x.n===name); if (!c) return;
@@ -1960,7 +1966,7 @@ function openComp(name){
     <h2>Évolution du prix</h2>${spark(h)}
     <h2>Semaine type (mercredi → mardi)</h2>
     ${prof ? `<p class="muted" style="margin-top:-4px">Écart moyen au prix moyen de la semaine, sur ${prof.weeks} semaine(s). Encadré : jour le moins cher.</p>${weekStrip(prof.prof, "min", "Achat du composant")}` : `<p class="muted">Pas assez de semaines complètes (minimum ${state.settings.minWeeks||3}).</p>`}
-    <h2>Crafts qui l'utilisent (${UB.length})</h2>${usedByTable(UB)}
+    <h2>Crafts qui l'utilisent (${UB.learned.length}${UB.unlearned.length ? ` + ${UB.unlearned.length} non appris` : ""})</h2>${usedByTable(UB)}
     <h2>Stock</h2>
     <table class="steps"><tbody>
       <tr><td>En stock / cible</td><td class="r">${c.stock} / ${c.target}</td></tr>
