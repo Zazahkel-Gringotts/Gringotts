@@ -380,9 +380,15 @@ $IdsPath     = Join-Path $Home2 "ids.json"
 $ApiIdPath   = Join-Path $Home2 "apiid.dat"
 $ApiSecPath  = Join-Path $Home2 "apisec.dat"
 $ApiLastPath = Join-Path $Home2 "api-last.txt"
-$MissPath    = Join-Path $Home2 "ids-introuvables2.json"
+$MissPath    = Join-Path $Home2 "ids-introuvables3.json"
 $ItemsLogPath = Join-Path $Home2 "items-last.txt"
+$ManualPath  = Join-Path $Home2 "ids-manuel.json"
 
+function NormName([string]$x) {
+  $d = $x.Normalize([Text.NormalizationForm]::FormD); $sb = New-Object Text.StringBuilder
+  foreach ($c in $d.ToCharArray()) { if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($c) -ne [Globalization.UnicodeCategory]::NonSpacingMark) { [void]$sb.Append($c) } }
+  return $sb.ToString().Replace([string][char]0x2019, "'").Replace([string][char]0x153, "oe").Replace([string][char]0x152, "oe").ToLowerInvariant().Trim()
+}
 function Run-Prices {
   if (-not (Test-Path $CfgPath)) { throw "Configuration absente : lance Installer.bat." }
   $cfg = Get-Content $CfgPath -Raw | ConvertFrom-Json
@@ -432,6 +438,8 @@ function Run-Prices {
   # Les identifiants trouvés sont mémorisés dans ids.json ; les introuvables ne sont retentés qu'après 3 jours.
   $rlog = New-Object System.Collections.Generic.List[string]
   try {
+    # Correspondances saisies à la main (ids-manuel.json : {"nom dans le jeu": identifiant}) : prioritaires
+    if (Test-Path $ManualPath) { try { (Get-Content $ManualPath -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $ids[$_.Name] = [int]$_.Value }; $rlog.Add("ids-manuel.json appliqué.") } catch { $rlog.Add("ids-manuel.json illisible : " + $_.Exception.Message) } }
     $unres = New-Object System.Collections.Generic.List[string]
     if ($text) { foreach ($ln in ($text -split "`n")) { $f = $ln.TrimEnd("`r").Split(";"); if ($f[0] -eq "U" -and $f.Count -ge 2 -and $f[1] -and -not $ids.ContainsKey($f[1])) { $unres.Add($f[1]) } } }
     $miss = @{}; if (Test-Path $MissPath) { try { (Get-Content $MissPath -Raw -Encoding UTF8 | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $miss[$_.Name] = [int64]$_.Value } } catch {} }
@@ -448,13 +456,13 @@ function Run-Prices {
           $r = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers $hdr
           $okq++
           $js = [Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray()) | ConvertFrom-Json
-          $nn = $nm.Replace([string][char]0x2019, "'")
-          $cands = @($js.results | Where-Object { ([string]$_.data.name.fr_FR).Replace([string][char]0x2019, "'") -eq $nn } | ForEach-Object { [int]$_.data.id })
+          $nn = NormName $nm
+          $cands = @($js.results | Where-Object { (NormName ([string]$_.data.name.fr_FR)) -eq $nn } | ForEach-Object { [int]$_.data.id })
           if ($cands.Count -gt 0) {
             $inAh = @($cands | Where-Object { $min.ContainsKey($_) })
             $ids[$nm] = if ($inAh.Count -gt 0) { ($inAh | Sort-Object | Select-Object -First 1) } else { ($cands | Sort-Object | Select-Object -First 1) }
             $found++
-          } else { $miss[$nm] = $now; if ($mlog.Count -lt 12) { $mlog.Add(("  introuvable : {0} -> {1} résultat(s) : {2}" -f $nm, @($js.results).Count, ((@($js.results) | Select-Object -First 3 | ForEach-Object { $_.data.name.fr_FR }) -join " | "))) } }
+          } else { $miss[$nm] = $now; $near = @(@($js.results) | Where-Object { $r = NormName ([string]$_.data.name.fr_FR); $r.Contains($nn) -or $nn.Contains($r) } | Select-Object -First 4 | ForEach-Object { "{0}={1}" -f $_.data.name.fr_FR, $_.data.id }); if (-not $near) { $near = @(@($js.results) | Select-Object -First 3 | ForEach-Object { "{0}={1}" -f $_.data.name.fr_FR, $_.data.id }) }; if ($mlog.Count -lt 60) { $mlog.Add(("  introuvable : {0} -> proches : {1}" -f $nm, ($near -join " | "))) } }
         } catch {
           $errs++; if (-not $first) { $first = $_.Exception.Message }
           if ($errs -ge 3 -and $okq -eq 0) { $rlog.Add("Recherche indisponible, abandon : $first"); break }
