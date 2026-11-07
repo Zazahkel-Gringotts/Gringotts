@@ -49,3 +49,7 @@ Si le navigateur refuse le dossier (WoW dans `Program Files`, par exemple) : bou
 ## Développement
 
 `src/` contient les sources, `python3 -I build.py` assemble `index.html`.
+
+## Relevé automatique des prix (19h30)
+
+`Planifier-HV.bat` crée la tâche Windows « Gringotts - Prix HV » : chaque jour à 19h30 (rattrapage au réveil du PC), elle lance `Gringotts-Sync.ps1 -Prices -Auto` sans fenêtre. Le prix du jour est écrit dans l'historique (`data/p-AAAA-MM-JJ.json`) ; le dashboard le récupère à sa prochaine synchro. Prérequis : avoir lancé `Prix-API.bat` une fois (identifiants Blizzard). Résultat de chaque passage dans `%APPDATA%\GringottsSync\sync.log`. `Deplanifier-HV.bat` supprime la tâche.

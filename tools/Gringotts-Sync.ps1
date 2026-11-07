@@ -5,6 +5,9 @@
     -Setup     configuration guidée (dossier WoW, jeton GitHub, mot de passe), puis premier envoi
     -Once      un envoi immédiat (Envoyer.bat) : lit le fichier de l'addon, chiffre, envoie
     -Prices    récupère les prix de l'HV via l'API Blizzard et les envoie au dashboard (remplace le scan HV)
+    -Auto      avec -Prices : mode sans fenêtre ni question (tâche planifiée), erreurs écrites dans sync.log
+    -Schedule  crée la tâche Windows « Gringotts - Prix HV » : un relevé des prix chaque jour à 19h30 (Planifier-HV.bat)
+    -Unschedule supprime cette tâche
     -Compare   compare les prix de ton dernier export aux HV de l'API Blizzard (identifie ton HV)
     -Apply     copie le Dash.lua téléchargé depuis le dashboard dans le dossier de l'addon (Appliquer.bat)
     -Watch     option : reste ouvert et envoie à chaque /reload (non utilisé par défaut)
@@ -19,6 +22,9 @@ param(
   [switch]$Apply,
   [switch]$Compare,
   [switch]$Prices,
+  [switch]$Auto,
+  [switch]$Schedule,
+  [switch]$Unschedule,
   [string]$OutDir = "",
   [string]$File = ""
 )
@@ -399,6 +405,7 @@ function Run-Prices {
 
   # Identifiants de l'API Blizzard (mémorisés, chiffrés par Windows pour ton compte)
   $cid = Read-Secret $ApiIdPath; $csec = Read-Secret $ApiSecPath
+  if ((-not $cid -or -not $csec) -and $Auto) { throw "Identifiants Blizzard absents : lance Prix-API.bat une fois à la main pour les saisir." }
   if (-not $cid -or -not $csec) {
     Write-Host "Première utilisation : colle tes identifiants Blizzard (ils seront mémorisés, chiffrés pour ton compte Windows)."
     $cid = (Read-Host 'Client ID').Trim()
@@ -475,7 +482,9 @@ function Run-Prices {
   Gh-Put $cfg $token "data/api.json" (Protect-Bytes ([Text.Encoding]::UTF8.GetBytes($apiText)) $keys) ("prix API {0}" -f (Get-Date -Format "yyyy-MM-dd HH:mm"))
   # Jour courant : fichier de prix = export local + prix API par-dessus (historique pour les autres appareils)
   $priceLines = @{}
-  if ($text) { foreach ($ln in ($text -split "`n")) { $ln = $ln.TrimEnd("`r"); if ($ln -match "^P;([^;]*);") { $priceLines[$Matches[1]] = $ln } } }
+  # Les prix de l'export ne servent qu'à compléter le jour de cet export : un export ancien ne doit pas créer de faux points
+  $expDay = ""; if ($text -and (($text -split "`n")[0]) -match "^WFC1;(\d+);") { $expDay = [DateTimeOffset]::FromUnixTimeSeconds([int64]$Matches[1]).LocalDateTime.ToString("yyyy-MM-dd") }
+  if ($text -and $expDay -eq $day) { foreach ($ln in ($text -split "`n")) { $ln = $ln.TrimEnd("`r"); if ($ln -match "^P;([^;]*);") { $priceLines[$Matches[1]] = $ln } } }
   foreach ($l in $pl) { $f = $l.Split(";"); $priceLines[$f[1]] = $l }
   $pj = Protect-Bytes ([Text.Encoding]::UTF8.GetBytes((@("WFC1;$t;API;$ah") + ($priceLines.Values | Sort-Object)) -join "`n")) $keys
   Gh-Put $cfg $token ("data/p-{0}.json" -f $day) $pj ("prix {0}" -f $day)
@@ -487,6 +496,24 @@ function Run-Prices {
   }
   Log ("Prix API envoyés : {0} prix (HV {1}) sur {2} objets connus." -f $pl.Count, $ah, $ids.Count)
   if ($rlog.Count -gt 0) { Log (($rlog | Where-Object { $_ -like "Recherche*" } | Select-Object -Last 1)) }
+}
+
+# ---------- Tâche planifiée : relevé quotidien des prix de l'HV ----------
+function Run-Schedule {
+  $ps1 = $PSCommandPath; if (-not $ps1) { $ps1 = $MyInvocation.MyCommand.Path }
+  if (-not (Test-Path $CfgPath) -or -not (Test-Path $ApiIdPath)) { throw "Lance d'abord Prix-API.bat une fois à la main (saisie des identifiants Blizzard), puis relance Planifier-HV.bat." }
+  $arg = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Prices -Auto' -f $ps1
+  $act = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arg
+  $trg = New-ScheduledTaskTrigger -Daily -At "19:30"
+  $set = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RunOnlyIfNetworkAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
+  [void](Register-ScheduledTask -TaskName "Gringotts - Prix HV" -Action $act -Trigger $trg -Settings $set -Description "Relevé quotidien des prix de l'HV (API Blizzard) pour le dashboard Gringotts" -Force)
+  Write-Host "Tâche « Gringotts - Prix HV » créée : tous les jours à 19h30 (rattrapage au réveil du PC si l'heure est manquée)."
+  Write-Host "Script utilisé : $ps1 (relance Planifier-HV.bat si tu déplaces ce dossier)."
+  Write-Host "Résultat de chaque exécution : $LogPath"
+}
+function Run-Unschedule {
+  Unregister-ScheduledTask -TaskName "Gringotts - Prix HV" -Confirm:$false -ErrorAction SilentlyContinue
+  Write-Host "Tâche « Gringotts - Prix HV » supprimée."
 }
 
 # ---------- Boucle de surveillance ----------
@@ -517,6 +544,9 @@ function Run-Watch {
 if ($Setup) { Run-Setup; return }
 if ($Apply) { Run-Apply; return }
 if ($Compare) { Run-Compare; return }
+if ($Schedule) { Run-Schedule; return }
+if ($Unschedule) { Run-Unschedule; return }
+if ($Prices -and $Auto) { try { Run-Prices } catch { Log ("Erreur prix automatiques : " + $_.Exception.Message); exit 1 }; return }
 if ($Prices) { Run-Prices; return }
 if ($Watch) { Run-Watch; return }
 if ($Once -or $OutDir -or (-not $Watch)) {
