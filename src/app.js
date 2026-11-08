@@ -1113,7 +1113,15 @@ views.recettes = () => {
 // Historique trop court : médiane 30 j et meilleur jour pas encore fiables
 const histNote = () => M.lastDate && M.histDays < (state.settings.minHist||7) ? `<div class="note warn">Historique de prix : <b>${M.histDays} jour${M.histDays>1?"s":""}</b>. La médiane 30 j et le meilleur jour ne sont pas encore fiables (${state.settings.minHist||7} jours minimum pour la médiane, ${state.settings.minWeeks||3} semaines complètes pour le meilleur jour) : les marges « prudentes » reposent surtout sur le prix du jour.</div>` : "";
 // ---------- Finances : graphiques et blocs ----------
-const fnum = v => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+// Texte brut d'un montant d'or pour les axes SVG : « 1 200g », « 12g 50s », « 3s 40c » (l'ancien arrondi à l'unité affichait 0 pour tout montant < 1 or)
+const fnum = v => {
+  let c = Math.round(Math.abs(v)*10000); if (!c) return "0";
+  const g = Math.floor(c/10000); c -= g*10000; const sv = Math.floor(c/100), cv = c - sv*100, sg = v < 0 ? "−" : "", out = [];
+  if (g) out.push(g.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "g");
+  if (sv && g < 100) out.push(sv + "s");
+  if (cv && !g) out.push(cv + "c");
+  return sg + out.join(" ");
+};
 const sgnMoney = v => v===null || v===undefined ? "—" : `<span style="color:var(--${v>=0?"ok":"bad"})">${v>=0?"+":"−"}</span>${money(Math.abs(v))}`;
 // Graduations « rondes » (1, 2, 5 × 10^n) couvrant [min, max], sans forcer le zéro
 function niceTicks(min, max, n){
