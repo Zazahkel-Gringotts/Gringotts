@@ -226,3 +226,4 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   .mbar a.on{color:var(--gold);font-weight:600;box-shadow:inset 0 2px 0 var(--gold)}
   .mfoot{text-align:center;margin:18px 0 4px;font-size:13px}.mfoot a{color:var(--muted)}
 }
+@media (max-width:700px){#dBody .tw td,#dBody .tw th{padding:7px 8px}#dBody .tw .num{text-align:right}}

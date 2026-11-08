@@ -242,6 +242,7 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   .mbar a.on{color:var(--gold);font-weight:600;box-shadow:inset 0 2px 0 var(--gold)}
   .mfoot{text-align:center;margin:18px 0 4px;font-size:13px}.mfoot a{color:var(--muted)}
 }
+@media (max-width:700px){#dBody .tw td,#dBody .tw th{padding:7px 8px}#dBody .tw .num{text-align:right}}
 </style>
 </head>
 <body>
@@ -1803,6 +1804,20 @@ const MOBQ = window.matchMedia("(max-width:700px)");
 const deskForced = () => { try { return localStorage.getItem("gringotts-desk")==="1"; } catch(e) { return false; } };
 const mobOn = () => MOBQ.matches && !deskForced();
 let mobTab = "resume", mobCraft = "ok", mobStock = "buy";
+function openGold(){
+  const GS = goldSeries(); if (!GS) return;
+  const R = GS.rows, cur = R[R.length-1], at = n => R.length > n ? R[R.length-1-n].total : null;
+  const dl = n => { const p = at(n); return p===null ? null : cur.total - p; };
+  const sg = d => d===null ? `<span class="muted">—</span>` : `<b style="color:var(--${d>0?"ok":d<0?"bad":"muted"})">${d>0?"+":d<0?"−":""}${money(Math.abs(d))}</b>`;
+  const fd = d => new Date(d+"T00:00:00").toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"});
+  const tot = (k) => R.slice(-14).reduce((a,r) => a + (r[k]||0), 0);
+  openDrawer(`<h3>Suivi des finances</h3>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"><div class="kpi"><div class="v" style="font-size:18px">${sg(dl(1))}</div><div class="l">24 h</div></div><div class="kpi"><div class="v" style="font-size:18px">${sg(dl(7))}</div><div class="l">7 jours</div></div><div class="kpi"><div class="v" style="font-size:18px">${sg(dl(30))}</div><div class="l">30 jours</div></div></div>
+    <div class="tw"><table style="font-size:14px"><thead><tr><th>Perso</th><th class="num">Or</th></tr></thead><tbody>${GS.who.map(w => `<tr><td>${esc(w)}</td><td class="num">${money(cur.per[w] ?? 0)}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="num"><b>${money(cur.total)}</b></td></tr></tbody></table></div>
+    <h3 style="margin-top:18px">14 derniers jours</h3>
+    <div class="tw"><table style="font-size:13px;white-space:nowrap"><thead><tr><th>Jour</th><th class="num">Total</th><th class="num">Δ</th><th class="num">Vendu</th><th class="num">Acheté</th></tr></thead><tbody>${R.slice(-14).reverse().map(r => `<tr><td>${fd(r.d)}</td><td class="num">${money(r.total)}</td><td class="num">${sg(r.delta)}</td><td class="num">${r.sold ? money(r.sold) : "—"}</td><td class="num">${r.bought ? money(r.bought) : "—"}</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted small">Ventes nettes de taxe et achats relevés à l'HV. Détail complet et graphique : version PC, onglet Finances.</p>`);
+}
 function renderMob(){
   let host = document.getElementById("mob");
   if (!host) { host = document.createElement("div"); host.id = "mob"; document.body.appendChild(host); host.addEventListener("click", mobClick); }
@@ -1826,7 +1841,7 @@ function renderMob(){
   const none = t => `<div class="mnone">${t}</div>`;
   let body = "";
   if (mobTab==="resume") body = `
-    <div class="mcard big"><div class="ml">Or détenu</div><div class="mv">${cur ? money(cur.total) : "—"}</div>
+    <div class="mcard big" data-act="gold" role="button" tabindex="0" style="cursor:pointer"><div class="ml">Or détenu <span class="muted small">· détail ›</span></div><div class="mv">${cur ? money(cur.total) : "—"}</div>
       ${d7!==null ? `<div class="small" style="color:var(--${d7>0?"ok":d7<0?"bad":"muted"})">${d7>0?"▲ +":d7<0?"▼ −":"■ "}${money(Math.abs(d7))} <span class="muted">sur ${n7} j</span></div>` : ""}
       ${GS && cur ? `<div class="mper">${GS.who.map(w => `<span>${esc(w)} <b>${money(cur.per[w] ?? 0)}</b></span>`).join("")}</div>` : `<div class="muted small">En attente du premier export.</div>`}</div>
     <div class="mgrid">
@@ -1855,6 +1870,7 @@ function renderMob(){
 }
 function mobClick(e){
   const t = e.target.closest("[data-tab],[data-act],[data-craft],[data-comp]"); if (!t) return;
+  if (t.dataset.act==="gold") { openGold(); return; }
   if (t.dataset.act==="prix") { e.preventDefault(); refreshPrices(); return; }
   if (t.dataset.act==="sync") { e.preventDefault(); document.getElementById("syncBtn").click(); return; }
   if (t.dataset.act==="desk") { e.preventDefault(); try { localStorage.setItem("gringotts-desk","1"); } catch(x) {} render(); return; }
