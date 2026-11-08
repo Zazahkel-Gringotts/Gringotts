@@ -186,6 +186,10 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
 /* ===== Vue smartphone (≤ 700 px) : n'affecte pas le PC ===== */
 #mob,#mobBack{display:none}
 @media (max-width:700px){
+  body.mobmode{--bg:#0f1319;--panel:#161c25;--panel2:#1d2531;--line:#2b3544;--ink:#e7e3d8;--muted:#a0a9b8;--gold:#e4b84e;--silver:#c3cbd5;--copper:#d18a55;--accent:#e4b84e;--ok:#4fc68d;--okbg:#15301f;--info:#79aef2;--infobg:#172840;--warn:#eba845;--warnbg:#33260f;--bad:#ee6a57;--badbg:#3a1815;color-scheme:dark}
+  body.mobmode #mob a{color:inherit;text-decoration:none}
+  body.mobmode #mob .mseg a.on,body.mobmode #mob .mbar a.on{color:var(--gold)}
+  body.mobmode #mob .mfoot a{color:var(--muted);text-decoration:underline}
   body.mobmode .app,body.mobmode .bgart{display:none}
   body.mobmode #mob{display:block;min-height:100vh;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   body:not(.mobmode) #mobBack{display:block;position:fixed;right:10px;bottom:10px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--gold)}
@@ -198,7 +202,7 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   .mcard .mv{font-size:28px;font-weight:600;line-height:1.2;margin-top:2px}
   .mcard.big .mv{font-size:34px}
   .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mgrid .mcard{margin:0 0 10px}
-  .mper{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:14px}.mper span{color:var(--muted)}.mper b{color:var(--text)}
+  .mper{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:14px}.mper span{color:var(--muted)}.mper b{color:var(--ink)}
   .mact{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line);cursor:pointer;color:inherit}
   .mact:first-of-type{margin-top:6px}.mact b{font-size:18px}
   .mh{font-family:var(--serif);font-size:19px;margin:14px 2px 8px}
