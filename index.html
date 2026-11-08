@@ -1848,7 +1848,7 @@ function renderMob(){
     body = `<div class="mseg">${[["buy","À acheter ("+buys.length+")"],["sell","À vendre ("+sells.length+")"]].map(([k,l]) => `<a data-sub="${k}" data-tab="stock" class="${mobStock===k?"on":""}">${l}</a>`).join("")}</div>
       <div class="mlist">${list.slice(0,40).map(mobStock==="buy" ? buyRow : sellRow).join("") || none(mobStock==="buy" ? "Rien à acheter pour l'instant." : "Aucun surplus à vendre.")}</div>${list.length>40 ? `<p class="muted small" style="text-align:center">${list.length-40} autres sur la version PC.</p>` : ""}`;
   }
-  host.innerHTML = `<header class="mtop"><div class="mbrand"><span class="seal" role="img" aria-label="Sceau de la banque"></span><div><b>Gringotts</b><div class="muted small" id="mobSt">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div></div>
+  host.innerHTML = `<header class="mtop"><div class="mbrand"><span class="seal" role="img" aria-label="Sceau de la banque"></span><div><b>Gringotts</b><div class="muted small" id="mobSt">${syncLabel()}</div></div></div>
       <div class="mbtns"><button class="btn sm" data-act="prix" type="button" title="Récupérer les prix de l'HV">⟳ Prix</button><button class="btn sm" data-act="sync" type="button" title="Synchroniser">↻</button></div></header>
     <main class="mmain">${body}<p class="mfoot"><a href="#" data-act="desk">Version PC</a></p></main>
     <nav class="mbar">${[["resume","Résumé"],["crafts","Crafts"],["stock","Stock"]].map(([k,l]) => `<a data-tab="${k}" class="${mobTab===k?"on":""}">${l}</a>`).join("")}</nav>`;
@@ -2433,12 +2433,13 @@ async function decryptFile(txt, keys){
   return new Response(new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
 }
 function setSyncSt(msg){ const el = document.getElementById("syncSt"); if (el) el.textContent = msg; const m = document.getElementById("mobSt"); if (m) m.textContent = msg; }
-function refreshSyncSt(){
-  if (syncBusy) return; const c = readSync();
-  if (!c.lastOk) { setSyncSt(syncPass() ? "Pas encore synchronisé" : "Non connecté"); return; }
-  const m = Math.max(0, Math.round((Date.now() - c.lastOk)/60000));
-  setSyncSt(`Synchronisé il y a ${m < 1 ? "moins d'1 min" : m < 60 ? m+" min" : Math.round(m/60)+" h"} · export du ${new Date(c.exp*1000).toLocaleString("fr-FR", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"})}`);
+function syncLabel(){
+  const t = state.apiLast && state.apiLast.t ? state.apiLast.t*1000 : 0;
+  if (!t) return syncPass() ? "Prix HV : pas encore reçus" : "Non connecté";
+  const m = Math.max(0, Math.round((Date.now() - t)/60000));
+  return `Prix HV du ${new Date(t).toLocaleString("fr-FR", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"})} · il y a ${m < 1 ? "moins d'1 min" : m < 60 ? m+" min" : m < 2880 ? Math.round(m/60)+" h" : Math.round(m/1440)+" j"}`;
 }
+function refreshSyncSt(){ if (syncBusy) return; setSyncSt(syncLabel()); }
 const SYNC_MSG = {BADPASS:"Mot de passe incorrect.", NODATA:"Aucune donnée publiée : lance un scan puis /reload en jeu.", RATE:"Limite GitHub atteinte, réessaie dans quelques minutes.", NET:"GitHub injoignable (réseau).", OLD:"Navigateur trop ancien pour le déchiffrement.", FORMAT:"Export illisible (version de l'addon ?)."};
 
 async function syncNow(opts = {}){
