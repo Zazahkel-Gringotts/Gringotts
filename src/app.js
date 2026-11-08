@@ -1507,7 +1507,78 @@ views.reglages = () => { const S = state.settings; return `
   <div class="toolbar"><button class="btn" id="bkExport">Exporter une sauvegarde</button><button class="btn" id="bkShow">Restaurer une sauvegarde</button><button class="btn" id="resetData" style="color:var(--bad)" title="Efface prix (y compris ceux de test), stocks, recettes apprises, niveaux, or et ventes : tableau vierge. Garde les réglages et les frais de dépôt mesurés.">Réinitialiser mes données</button><button class="btn" id="reset" style="color:var(--bad)" title="Retour à l'état d'origine : réglages effacés, prix et stocks de test du 29/10 remis">Tout effacer</button></div>
   <div id="bkOut"></div>`; };
 
+// ===================== Vue smartphone (≤ 700 px) : résumé simplifié, sans toucher à l'affichage PC =====================
+const MOBQ = window.matchMedia("(max-width:700px)");
+const deskForced = () => { try { return localStorage.getItem("gringotts-desk")==="1"; } catch(e) { return false; } };
+const mobOn = () => MOBQ.matches && !deskForced();
+let mobTab = "resume", mobCraft = "ok", mobStock = "buy";
+function renderMob(){
+  let host = document.getElementById("mob");
+  if (!host) { host = document.createElement("div"); host.id = "mob"; document.body.appendChild(host); host.addEventListener("click", mobClick); }
+  const GS = goldSeries(), cur = GS ? GS.rows[GS.rows.length-1] : null;
+  const n7 = GS ? Math.min(7, GS.rows.length-1) : 0, ref = GS && n7 ? GS.rows[GS.rows.length-1-n7].total : null, d7 = ref===null || !cur ? null : cur.total - ref;
+  const learned = M.crafts.filter(c => c.learned), minNet = state.settings.minNet || 0;
+  const rentables = learned.filter(c => c.st==="ok" && c.net!==null && c.net >= minNet).sort((a,b) => b.net - a.net);
+  const loss = learned.filter(c => c.st==="bad").length;
+  const toProduce = learned.filter(c => c.act==="craft").length;
+  const buys = M.comps.filter(c => c.adv && c.adv.kind==="buy").sort((a,b) => b.adv.buy*(b.adv.unit||0) - a.adv.buy*(a.adv.unit||0));
+  const sells = M.comps.filter(c => c.adv && c.adv.kind==="sell" && c.stock > 0).sort((a,b) => b.adv.sell*(b.adv.unit||0) - a.adv.sell*(a.adv.unit||0));
+  const stockVal = M.comps.filter(c => c.stock > 0).reduce((a,c) => a + (c.value||0), 0) + M.pnjRows.reduce((a,c) => a + (c.value||0), 0);
+  const nStock = M.comps.filter(c => c.stock > 0).length;
+  const buyCost = buys.reduce((a,c) => a + c.adv.buy*(c.adv.unit||0), 0), sellNet = sells.reduce((a,c) => a + c.adv.sell*(c.adv.unit||0)*(1-state.settings.cut), 0);
+  const apiT = state.apiLast && state.apiLast.t ? state.apiLast.t*1000 : 0;
+  const ago = t => { if (!t) return "—"; const m = Math.round((Date.now()-t)/60000); return m < 60 ? "il y a "+Math.max(1,m)+" min" : m < 2880 ? "il y a "+Math.round(m/60)+" h" : "il y a "+Math.round(m/1440)+" j"; };
+  const row = (nm, sub, val, attr) => `<div class="mrow" ${attr||""}><div class="ml"><b>${esc(nm)}</b>${sub ? `<div class="muted small">${sub}</div>` : ""}</div><div class="mr">${val}</div></div>`;
+  const craftRow = c => row(c.n, `ROI ${roiTxt(c.roi)} · ${actPill(c)}`, `<b class="${c.st==="bad"?"bad":""}">${money(c.net)}</b>`, `data-craft="${esc(c.n)}" role="button" tabindex="0"`);
+  const buyRow = c => row(c.n, `${money(c.adv.unit)} l'unité${c.adv.maxBuy!==null ? ` · max ${money(c.adv.maxBuy)}` : ""} · stock ${c.stock}`, `<b style="color:var(--ok)">Acheter ${c.adv.buy}</b><div class="muted small">≈ ${money(c.adv.buy*(c.adv.unit||0))}</div>`, `data-comp="${esc(c.n)}" role="button" tabindex="0"`);
+  const sellRow = c => row(c.n, `${money(c.adv.unit)} l'unité${c.adv.sellPrice!==null ? ` · mettre à ${money(c.adv.sellPrice)}` : ""} · stock ${c.stock}`, `<b style="color:var(--warn)">Vendre ${c.adv.sell}</b><div class="muted small">≈ ${money(c.adv.sell*(c.adv.unit||0)*(1-state.settings.cut))} net</div>`, `data-comp="${esc(c.n)}" role="button" tabindex="0"`);
+  const none = t => `<div class="mnone">${t}</div>`;
+  let body = "";
+  if (mobTab==="resume") body = `
+    <div class="mcard big"><div class="ml">Or détenu</div><div class="mv">${cur ? money(cur.total) : "—"}</div>
+      ${d7!==null ? `<div class="small" style="color:var(--${d7>0?"ok":d7<0?"bad":"muted"})">${d7>0?"▲ +":d7<0?"▼ −":"■ "}${money(Math.abs(d7))} <span class="muted">sur ${n7} j</span></div>` : ""}
+      ${GS && cur ? `<div class="mper">${GS.who.map(w => `<span>${esc(w)} <b>${money(cur.per[w] ?? 0)}</b></span>`).join("")}</div>` : `<div class="muted small">En attente du premier export.</div>`}</div>
+    <div class="mgrid">
+      <div class="mcard"><div class="ml">Valeur du stock</div><div class="mv">${money(stockVal)}</div><div class="muted small">${nStock} objets</div></div>
+      <div class="mcard"><div class="ml">Crafts rentables</div><div class="mv" style="color:var(--ok)">${rentables.length}</div><div class="small" style="color:var(--bad)">${loss} en perte</div></div>
+    </div>
+    <div class="mcard"><div class="ml">À faire</div>
+      <a class="mact" data-tab="stock" data-sub="buy"><span>À acheter</span><b>${buys.length}</b><span class="muted small">${buys.length ? "≈ "+money(buyCost) : ""}</span></a>
+      <a class="mact" data-tab="stock" data-sub="sell"><span>À vendre</span><b>${sells.length}</b><span class="muted small">${sells.length ? "≈ "+money(sellNet)+" net" : ""}</span></a>
+      <a class="mact" data-tab="crafts" data-sub="craft"><span>À produire</span><b>${toProduce}</b><span class="muted small">composants en stock</span></a></div>
+    <h2 class="mh">Top crafts</h2>
+    <div class="mlist">${rentables.slice(0,5).map(craftRow).join("") || none("Aucun craft rentable avec les prix actuels.")}</div>`;
+  else if (mobTab==="crafts") {
+    const list = mobCraft==="ok" ? rentables : mobCraft==="craft" ? learned.filter(c => c.act==="craft").sort((a,b) => (b.net??-1e9) - (a.net??-1e9)) : learned.filter(c => c.st==="bad").sort((a,b) => (a.net??0) - (b.net??0));
+    body = `<div class="mseg">${[["ok","Rentables"],["craft","À produire"],["bad","Pertes"]].map(([k,l]) => `<a data-sub="${k}" data-tab="crafts" class="${mobCraft===k?"on":""}">${l}</a>`).join("")}</div>
+      <div class="mlist">${list.slice(0,40).map(craftRow).join("") || none("Rien dans cette liste.")}</div>${list.length>40 ? `<p class="muted small" style="text-align:center">${list.length-40} autres sur la version PC.</p>` : ""}`;
+  } else {
+    const list = mobStock==="buy" ? buys : sells;
+    body = `<div class="mseg">${[["buy","À acheter ("+buys.length+")"],["sell","À vendre ("+sells.length+")"]].map(([k,l]) => `<a data-sub="${k}" data-tab="stock" class="${mobStock===k?"on":""}">${l}</a>`).join("")}</div>
+      <div class="mlist">${list.slice(0,40).map(mobStock==="buy" ? buyRow : sellRow).join("") || none(mobStock==="buy" ? "Rien à acheter pour l'instant." : "Aucun surplus à vendre.")}</div>${list.length>40 ? `<p class="muted small" style="text-align:center">${list.length-40} autres sur la version PC.</p>` : ""}`;
+  }
+  host.innerHTML = `<header class="mtop"><div><b>Gringotts</b><div class="muted small">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div>
+      <div class="mbtns"><button class="btn sm" data-act="sync" type="button">↻</button></div></header>
+    <main class="mmain">${body}<p class="mfoot"><a href="#" data-act="desk">Version PC</a></p></main>
+    <nav class="mbar">${[["resume","Résumé"],["crafts","Crafts"],["stock","Stock"]].map(([k,l]) => `<a data-tab="${k}" class="${mobTab===k?"on":""}">${l}</a>`).join("")}</nav>`;
+}
+function mobClick(e){
+  const t = e.target.closest("[data-tab],[data-act],[data-craft],[data-comp]"); if (!t) return;
+  if (t.dataset.act==="sync") { e.preventDefault(); document.getElementById("syncBtn").click(); return; }
+  if (t.dataset.act==="desk") { e.preventDefault(); try { localStorage.setItem("gringotts-desk","1"); } catch(x) {} render(); return; }
+  if (t.dataset.craft) { openCraft(t.dataset.craft); return; }
+  if (t.dataset.comp) { openComp(t.dataset.comp); return; }
+  if (t.dataset.tab) { mobTab = t.dataset.tab; if (t.dataset.sub) { if (mobTab==="crafts") mobCraft = t.dataset.sub; else if (mobTab==="stock") mobStock = t.dataset.sub; } e.preventDefault(); renderMob(); window.scrollTo(0,0); }
+}
+MOBQ.addEventListener("change", () => render());
+function ensureMobBack(){
+  let b = document.getElementById("mobBack");
+  if (!b) { b = document.createElement("a"); b.id = "mobBack"; b.href = "#"; b.textContent = "Version mobile"; b.addEventListener("click", e => { e.preventDefault(); try { localStorage.removeItem("gringotts-desk"); } catch(x) {} render(); }); document.body.appendChild(b); }
+}
 function render(){
+  document.body.classList.toggle("mobmode", mobOn());
+  if (MOBQ.matches) ensureMobBack();
+  if (mobOn()) { renderMob(); return; }
   const main = document.getElementById("main");
   const v = views[current] ? current : "controle";
   main.innerHTML = (schemaNewer ? `<div class="note warn" role="alert"><b>Données plus récentes que cette version du tableau de bord.</b> Elles sont lues telles quelles ; mettez le tableau de bord à jour avant de modifier quoi que ce soit.</div>` : "") + (storageFail ? `<div class="note bad" role="alert"><b>Sauvegarde locale impossible</b> (espace du navigateur saturé). ${db ? "Vos données restent enregistrées sur votre compte." : "Exportez une sauvegarde dans Réglages avant de continuer."} Réduisez l'historique des imports (Comptoir → Historique) pour libérer de la place.</div>` : "") + views[v]();
