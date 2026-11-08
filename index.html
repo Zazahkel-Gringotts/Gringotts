@@ -206,12 +206,17 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   body.mobmode #mob a{color:inherit;text-decoration:none}
   body.mobmode #mob .mseg a.on,body.mobmode #mob .mbar a.on{color:var(--gold)}
   body.mobmode #mob .mfoot a{color:var(--muted);text-decoration:underline}
-  body.mobmode .app,body.mobmode .bgart{display:none}
+  body.mobmode .app{display:none}
+  body.mobmode #mob{position:relative;z-index:1}
   body.mobmode #mob{display:block;min-height:100vh;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   body:not(.mobmode) #mobBack{display:block;position:fixed;right:10px;bottom:10px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--gold)}
   .mtop{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
-  .mtop b{font-family:var(--serif);font-size:20px}
-  .mtop .btn{font-size:18px;padding:6px 14px}
+  .mtop{background:color-mix(in srgb,var(--panel) 92%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);gap:8px}
+  .mbrand{display:flex;align-items:center;gap:10px;min-width:0}.mbrand .seal{width:38px;height:38px}
+  .mtop b{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--gold)}
+  .mbtns{display:flex;gap:6px;flex:none}
+  .mtop .muted{max-width:48vw;line-height:1.25}
+  .mtop .btn{font-size:16px;padding:7px 12px}
   .mmain{padding:12px 12px 20px;display:block}
   .mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
   .mcard .ml,.mcard>.ml{color:var(--muted);font-size:13px}
@@ -1841,13 +1846,14 @@ function renderMob(){
     body = `<div class="mseg">${[["buy","À acheter ("+buys.length+")"],["sell","À vendre ("+sells.length+")"]].map(([k,l]) => `<a data-sub="${k}" data-tab="stock" class="${mobStock===k?"on":""}">${l}</a>`).join("")}</div>
       <div class="mlist">${list.slice(0,40).map(mobStock==="buy" ? buyRow : sellRow).join("") || none(mobStock==="buy" ? "Rien à acheter pour l'instant." : "Aucun surplus à vendre.")}</div>${list.length>40 ? `<p class="muted small" style="text-align:center">${list.length-40} autres sur la version PC.</p>` : ""}`;
   }
-  host.innerHTML = `<header class="mtop"><div><b>Gringotts</b><div class="muted small">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div>
-      <div class="mbtns"><button class="btn sm" data-act="sync" type="button">↻</button></div></header>
+  host.innerHTML = `<header class="mtop"><div class="mbrand"><span class="seal" role="img" aria-label="Sceau de la banque"></span><div><b>Gringotts</b><div class="muted small" id="mobSt">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div></div>
+      <div class="mbtns"><button class="btn sm" data-act="prix" type="button" title="Récupérer les prix de l'HV">⟳ Prix</button><button class="btn sm" data-act="sync" type="button" title="Synchroniser">↻</button></div></header>
     <main class="mmain">${body}<p class="mfoot"><a href="#" data-act="desk">Version PC</a></p></main>
     <nav class="mbar">${[["resume","Résumé"],["crafts","Crafts"],["stock","Stock"]].map(([k,l]) => `<a data-tab="${k}" class="${mobTab===k?"on":""}">${l}</a>`).join("")}</nav>`;
 }
 function mobClick(e){
   const t = e.target.closest("[data-tab],[data-act],[data-craft],[data-comp]"); if (!t) return;
+  if (t.dataset.act==="prix") { e.preventDefault(); refreshPrices(); return; }
   if (t.dataset.act==="sync") { e.preventDefault(); document.getElementById("syncBtn").click(); return; }
   if (t.dataset.act==="desk") { e.preventDefault(); try { localStorage.setItem("gringotts-desk","1"); } catch(x) {} render(); return; }
   if (t.dataset.craft) { openCraft(t.dataset.craft); return; }
@@ -2424,7 +2430,7 @@ async function decryptFile(txt, keys){
   const zipped = await crypto.subtle.decrypt({name:"AES-CBC", iv}, keys.enc, ct);
   return new Response(new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
 }
-function setSyncSt(msg){ const el = document.getElementById("syncSt"); if (el) el.textContent = msg; }
+function setSyncSt(msg){ const el = document.getElementById("syncSt"); if (el) el.textContent = msg; const m = document.getElementById("mobSt"); if (m) m.textContent = msg; }
 function refreshSyncSt(){
   if (syncBusy) return; const c = readSync();
   if (!c.lastOk) { setSyncSt(syncPass() ? "Pas encore synchronisé" : "Non connecté"); return; }

@@ -190,12 +190,17 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   body.mobmode #mob a{color:inherit;text-decoration:none}
   body.mobmode #mob .mseg a.on,body.mobmode #mob .mbar a.on{color:var(--gold)}
   body.mobmode #mob .mfoot a{color:var(--muted);text-decoration:underline}
-  body.mobmode .app,body.mobmode .bgart{display:none}
+  body.mobmode .app{display:none}
+  body.mobmode #mob{position:relative;z-index:1}
   body.mobmode #mob{display:block;min-height:100vh;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   body:not(.mobmode) #mobBack{display:block;position:fixed;right:10px;bottom:10px;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--gold)}
   .mtop{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
-  .mtop b{font-family:var(--serif);font-size:20px}
-  .mtop .btn{font-size:18px;padding:6px 14px}
+  .mtop{background:color-mix(in srgb,var(--panel) 92%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);gap:8px}
+  .mbrand{display:flex;align-items:center;gap:10px;min-width:0}.mbrand .seal{width:38px;height:38px}
+  .mtop b{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--gold)}
+  .mbtns{display:flex;gap:6px;flex:none}
+  .mtop .muted{max-width:48vw;line-height:1.25}
+  .mtop .btn{font-size:16px;padding:7px 12px}
   .mmain{padding:12px 12px 20px;display:block}
   .mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
   .mcard .ml,.mcard>.ml{color:var(--muted);font-size:13px}

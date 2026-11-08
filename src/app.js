@@ -1557,13 +1557,14 @@ function renderMob(){
     body = `<div class="mseg">${[["buy","À acheter ("+buys.length+")"],["sell","À vendre ("+sells.length+")"]].map(([k,l]) => `<a data-sub="${k}" data-tab="stock" class="${mobStock===k?"on":""}">${l}</a>`).join("")}</div>
       <div class="mlist">${list.slice(0,40).map(mobStock==="buy" ? buyRow : sellRow).join("") || none(mobStock==="buy" ? "Rien à acheter pour l'instant." : "Aucun surplus à vendre.")}</div>${list.length>40 ? `<p class="muted small" style="text-align:center">${list.length-40} autres sur la version PC.</p>` : ""}`;
   }
-  host.innerHTML = `<header class="mtop"><div><b>Gringotts</b><div class="muted small">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div>
-      <div class="mbtns"><button class="btn sm" data-act="sync" type="button">↻</button></div></header>
+  host.innerHTML = `<header class="mtop"><div class="mbrand"><span class="seal" role="img" aria-label="Sceau de la banque"></span><div><b>Gringotts</b><div class="muted small" id="mobSt">${apiT ? "Prix HV "+ago(apiT) : "Prix HV : pas encore chargés"}${M.lastDate ? " · export "+fmtDate(M.lastDate) : ""}</div></div></div>
+      <div class="mbtns"><button class="btn sm" data-act="prix" type="button" title="Récupérer les prix de l'HV">⟳ Prix</button><button class="btn sm" data-act="sync" type="button" title="Synchroniser">↻</button></div></header>
     <main class="mmain">${body}<p class="mfoot"><a href="#" data-act="desk">Version PC</a></p></main>
     <nav class="mbar">${[["resume","Résumé"],["crafts","Crafts"],["stock","Stock"]].map(([k,l]) => `<a data-tab="${k}" class="${mobTab===k?"on":""}">${l}</a>`).join("")}</nav>`;
 }
 function mobClick(e){
   const t = e.target.closest("[data-tab],[data-act],[data-craft],[data-comp]"); if (!t) return;
+  if (t.dataset.act==="prix") { e.preventDefault(); refreshPrices(); return; }
   if (t.dataset.act==="sync") { e.preventDefault(); document.getElementById("syncBtn").click(); return; }
   if (t.dataset.act==="desk") { e.preventDefault(); try { localStorage.setItem("gringotts-desk","1"); } catch(x) {} render(); return; }
   if (t.dataset.craft) { openCraft(t.dataset.craft); return; }
@@ -2140,7 +2141,7 @@ async function decryptFile(txt, keys){
   const zipped = await crypto.subtle.decrypt({name:"AES-CBC", iv}, keys.enc, ct);
   return new Response(new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
 }
-function setSyncSt(msg){ const el = document.getElementById("syncSt"); if (el) el.textContent = msg; }
+function setSyncSt(msg){ const el = document.getElementById("syncSt"); if (el) el.textContent = msg; const m = document.getElementById("mobSt"); if (m) m.textContent = msg; }
 function refreshSyncSt(){
   if (syncBusy) return; const c = readSync();
   if (!c.lastOk) { setSyncSt(syncPass() ? "Pas encore synchronisé" : "Non connecté"); return; }
