@@ -971,8 +971,8 @@ function rebuild(){
 }
 const ACTIONS = {
   craft:{lbl:"Produire", cls:"ok", tip:"Rentable et compos en stock : produire, mettre en vente le jour indiqué"},
-  buy:{lbl:"Acheter", cls:"info", tip:"Rentable mais compos manquants : les acheter le jour indiqué"},
-  sell:{lbl:"Vendre", cls:"bad", tip:"Craft à perte : vendre les compos plutôt que produire, le jour indiqué"},
+  buy:{lbl:"Acheter compos", cls:"info", tip:"Rentable mais compos manquants : les acheter le jour indiqué"},
+  sell:{lbl:"Vendre compos", cls:"bad", tip:"Craft à perte : vendre les compos plutôt que produire, le jour indiqué"},
   check:{lbl:"À vérifier", cls:"mute", tip:"Prix manquant : décision impossible"}
 };
 
@@ -1113,8 +1113,8 @@ views.crafts = () => {
   <p class="lede">Ventes 30 j = quantités vendues (et taux d'écoulement vendus / (vendus + expirés)) relevées par Gringotts dans le courrier. Bénéfice net = prix de vente retenu × (1 − ${pct(state.settings.cut)}) − coût des composants. Le jour recommandé vient des semaines complètes de reset (mercredi → mardi) de l'historique. Cliquez une ligne pour le détail.</p>
   <div class="actsum">
     <button class="actcard${f.act==="craft"?" on":""}" data-act="craft"><span class="st ok">Produire</span><b>${cnt("craft")}</b><small>rentable, compos en stock</small></button>
-    <button class="actcard${f.act==="buy"?" on":""}" data-act="buy"><span class="st info">Acheter</span><b>${cnt("buy")}</b><small>rentable, compos à acheter</small></button>
-    <button class="actcard${f.act==="sell"?" on":""}" data-act="sell"><span class="st bad">Vendre</span><b>${cnt("sell")}</b><small>à perte : vendre les compos</small></button>
+    <button class="actcard${f.act==="buy"?" on":""}" data-act="buy"><span class="st info">Acheter compos</span><b>${cnt("buy")}</b><small>rentable : acheter les composants puis produire</small></button>
+    <button class="actcard${f.act==="sell"?" on":""}" data-act="sell"><span class="st bad">Vendre compos</span><b>${cnt("sell")}</b><small>craft à perte : ne pas produire, revendre les composants en stock</small></button>
   </div>
   <div class="toolbar">
     <input type="search" data-f="crafts.q" value="${esc(f.q)}" placeholder="Rechercher une recette" aria-label="Rechercher une recette">
@@ -1122,12 +1122,12 @@ views.crafts = () => {
       ${[["all","Tous les statuts"],["ok","Rentables"],["warn","Marge faible"],["bad","En perte"],["flag","À vérifier"]].map(([v,l])=>`<option value="${v}"${f.st===v?" selected":""}>${l}</option>`).join("")}
     </select>
     <select data-f="crafts.act" aria-label="Action">
-      ${[["all","Toutes les actions"],["craft","Produire"],["buy","Acheter"],["sell","Vendre"],["check","À vérifier"]].map(([v,l])=>`<option value="${v}"${f.act===v?" selected":""}>${l}</option>`).join("")}
+      ${[["all","Toutes les actions"],["craft","Produire"],["buy","Acheter compos"],["sell","Vendre compos"],["check","À vérifier"]].map(([v,l])=>`<option value="${v}"${f.act===v?" selected":""}>${l}</option>`).join("")}
     </select>
     <span class="count">${rows.length} recettes</span>
   </div>
   <div class="tw scroll"><table><thead><tr>
-    ${th("crafts","n","Recette")}${th("crafts","actLbl","Action")}${th("crafts","advQty","Conseil de quantité")}${th("crafts","dayOrd","Jour recommandé")}${th("crafts","cur","Prix HV","r")}${th("crafts","med","Médiane 30 j","r")}${th("crafts","cost","Coût","r")}${th("crafts","net","Bénéfice net","r")}${th("crafts","roi","ROI","r")}${th("crafts","possible","Faisables","r")}${th("crafts","soldN","Ventes 30 j","r")}<th>Marge</th>
+    ${th("crafts","n","Recette")}${th("crafts","actLbl","Action (composants)")}${th("crafts","advQty","Conseil de quantité")}${th("crafts","dayOrd","Jour recommandé")}${th("crafts","cur","Prix HV","r")}${th("crafts","med","Médiane 30 j","r")}${th("crafts","cost","Coût","r")}${th("crafts","net","Bénéfice net","r")}${th("crafts","roi","ROI","r")}${th("crafts","possible","Faisables","r")}${th("crafts","soldN","Ventes 30 j","r")}<th>Marge</th>
   </tr></thead><tbody>
   ${rows.map(c => `<tr class="click" data-craft="${esc(c.n)}"><td>${esc(c.n)}${c.flags.length?` <span title="${esc(c.flags.join(" · "))}" style="color:var(--warn)">⚠</span>`:""}</td>
     <td>${actPill(c)}</td>${advCell(c)}<td>${dayCell(c.dayLbl)}</td>
