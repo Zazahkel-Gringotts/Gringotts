@@ -1329,7 +1329,7 @@ function planDrawer(job){
 }
 const GUIDE = JSON.parse(document.getElementById("guides").textContent);
 // ---------- Récolte : pêche, dépeçage, herboristerie, minage (skills lus dans l'addon, prix = API HV) ----------
-filters.recolte = {sub:"peche"};
+filters.recolte = {sub:"peche", skmax:"all"};
 function gSkill(p){   // niveau de récolte (addon) ; le minage est rangé avec les métiers de craft
   if (norm(p)==="minage") return skillOf("Minage / divers") || Object.entries(state.gather||{}).find(([k]) => norm(k)==="minage")?.[1] || null;
   const e = Object.entries(state.gather||{}).find(([k]) => norm(k)===norm(p)); return e ? e[1] : null;
@@ -1363,12 +1363,13 @@ function recolteSub(sub, X){
         if (u.type==="cuisine" && (cook==null || v > cook)) { cook = v; cs = u.skill; } if (u.type==="alchimie" && (alch==null || v > alch)) { alch = v; as = u.skill; } });
       const raw = net(f.n), best = Math.max(raw ?? -1e9, cook ?? -1e9, alch ?? -1e9);
       const how = best===-1e9 ? null : best===raw ? "Brut HV" : best===cook ? "Cuisiné" : "Alchimie";
-      return {...f, raw, cook, alch, cs, as, best: best===-1e9 ? null : best, how, sk: skMin[f.n] ?? null};
-    }).sort((a,b) => (b.best ?? -1e9) - (a.best ?? -1e9));
+      return {...f, raw, cook, alch, cs, as, p: X.px(f.n), best: best===-1e9 ? null : best, how, sk: skMin[f.n] ?? null};
+    });
+    const fishRows = sortRows("recolte", fish, "best", "desc");
     const bestOf = new Map(fish.map(f => [f.n, f.best]));
     const zones = GUIDE.peche.zones.map(z => { const bf = z.poissons.map(n => [n, bestOf.get(n)]).filter(x => x[1]!=null).sort((a,b) => b[1]-a[1])[0]; return {...z, bf}; }).sort((a,b) => (a.skill ?? 1e9) - (b.skill ?? 1e9));
-    return `<h2>Poissons</h2><div class="tw scroll"><table><thead><tr><th>Poisson</th><th class="r">Prix HV</th><th class="r">Net (−taxe)</th><th class="r">Cuisiné</th><th class="r">Alchimie</th><th>Meilleur débouché</th><th>Skill pêche</th></tr></thead><tbody>
-    ${fish.map(f => `<tr><td>${esc(f.n)}</td><td class="r">${money(X.px(f.n))}</td><td class="r">${lbl("", f.raw)}</td><td class="r" title="${f.cs!=null ? "Cuisine "+f.cs+(cuisSk!=null && cuisSk < f.cs ? " (ton niveau : "+cuisSk+")" : "") : ""}">${lbl("", f.cook)}</td><td class="r" title="${f.as!=null ? "Alchimie "+f.as+(alcSk!=null && alcSk < f.as ? " (ton niveau : "+alcSk+")" : "") : ""}">${lbl("", f.alch)}</td><td>${f.how ? `<span class="st ok">${f.how}</span>` : `<span class="muted">pas de prix</span>`}</td><td>${stReq(s, f.sk)} <span class="muted">${f.sk ?? ""}</span></td></tr>`).join("")}</tbody></table></div>
+    return `<h2>Poissons</h2><div class="tw scroll"><table><thead><tr>${th("recolte","n","Poisson")}${th("recolte","p","Prix HV","r")}${th("recolte","raw","Net (−taxe)","r")}${th("recolte","cook","Cuisiné","r")}${th("recolte","alch","Alchimie","r")}${th("recolte","best","Meilleur débouché")}${th("recolte","sk","Skill requis","r")}<th>Statut</th></tr></thead><tbody>
+    ${fishRows.map(f => `<tr><td>${esc(f.n)}</td><td class="r">${money(X.px(f.n))}</td><td class="r">${lbl("", f.raw)}</td><td class="r" title="${f.cs!=null ? "Cuisine "+f.cs+(cuisSk!=null && cuisSk < f.cs ? " (ton niveau : "+cuisSk+")" : "") : ""}">${lbl("", f.cook)}</td><td class="r" title="${f.as!=null ? "Alchimie "+f.as+(alcSk!=null && alcSk < f.as ? " (ton niveau : "+alcSk+")" : "") : ""}">${lbl("", f.alch)}</td><td>${f.how ? `<span class="st ok">${f.how}</span>` : `<span class="muted">pas de prix</span>`}</td><td class="r">${f.sk ?? "—"}</td><td>${stReq(s, f.sk)}</td></tr>`).join("")}</tbody></table></div>
     <p class="muted">Valeur par poisson : revente nette de l'objet cuisiné/alchimique moins les autres composants, divisée par le nombre de poissons utilisés. Prix d'achat des autres composants : API HV, sinon PNJ.</p>
     <h2>Zones</h2><div class="tw scroll"><table><thead><tr><th>Zone</th><th class="r">Skill requis</th><th>Statut</th><th>Poissons</th><th>Meilleur</th></tr></thead><tbody>
     ${zones.map(z => `<tr><td>${esc(z.zone)}</td><td class="r">${z.skill ?? "—"}</td><td>${stReq(s, z.skill)}</td><td class="muted">${z.poissons.map(esc).join(", ")}</td><td>${z.bf ? `${esc(z.bf[0])} · ${money(z.bf[1])}` : `<span class="muted">—</span>`}</td></tr>`).join("")}</tbody></table></div>`;
@@ -1389,11 +1390,13 @@ function recolteSub(sub, X){
       SEED.crafts.forEach(c => { const r = (c.r||[]).find(x => norm(x[0])===norm(h.n)); if (!r) return;
         const v = useVal(h.n, {out: c.out || c.n, qty: 1, reag: c.r.map(x => ({n:x[0], q:x[1]}))}); if (v!=null && (best==null || v > best)) { best = v; pot = c.n; } });
       const raw = net(h.n), top = Math.max(raw ?? -1e9, best ?? -1e9);
-      return {...h, raw, alch: best, pot, how: top===-1e9 ? null : top===raw ? "Brut HV" : "Potion", top: top===-1e9 ? null : top};
-    }).sort((a,b) => (b.top ?? -1e9) - (a.top ?? -1e9));
-    return `<h2>Herbes</h2><div class="tw scroll"><table><thead><tr><th>Herbe</th><th class="r">Skill requis</th><th>Statut</th><th>Zones</th><th class="r">Prix HV</th><th class="r">Net</th><th class="r">Via potion (Lùsty)</th><th>Meilleur débouché</th></tr></thead><tbody>
-    ${herbs.map(h => `<tr><td>${esc(h.n)}${h.beta ? ` <span class="st mute" title="Données bêta, à confirmer">bêta</span>` : ""}</td><td class="r">${h.skill}</td><td>${stReq(s, h.skill)}</td><td class="muted">${h.zones.map(esc).join(", ")}</td><td class="r">${money(X.px(h.n))}</td><td class="r">${money(h.raw)}</td><td class="r" title="${esc(h.pot||"")}">${money(h.alch)}</td><td>${h.how ? `<span class="st ok">${h.how}</span>` : `<span class="muted">pas de prix</span>`}</td></tr>`).join("")}
-    ${GUIDE.herbo.inconnues.map(n => `<tr><td>${esc(n)}</td><td class="r muted" colspan="7">non communiqué (skill, zones)</td></tr>`).join("")}</tbody></table></div>
+      return {...h, sk: h.skill, p: X.px(h.n), raw, alch: best, pot, how: top===-1e9 ? null : top===raw ? "Brut HV" : "Potion", top: top===-1e9 ? null : top};
+    });
+    const fm = filters.recolte.skmax, lim = fm==="now" ? (s ? s.l : 0) : fm==="all" ? Infinity : +fm;
+    const herbRows = sortRows("recolte", herbs.filter(h => h.sk <= lim), "top", "desc");
+    return `<h2>Herbes</h2><div class="toolbar"><select data-f="recolte.skmax" aria-label="Filtrer par skill requis">${[["all","Tous les skills"],["now","Accessibles maintenant"],["75","Skill requis ≤ 75"],["150","Skill requis ≤ 150"],["225","Skill requis ≤ 225"],["300","Skill requis ≤ 300"]].map(([v,l]) => `<option value="${v}"${fm===v?" selected":""}>${l}</option>`).join("")}</select><span class="count">${herbRows.length} herbes</span></div><div class="tw scroll"><table><thead><tr>${th("recolte","n","Herbe")}${th("recolte","sk","Skill requis","r")}<th>Statut</th><th>Zones</th>${th("recolte","p","Prix HV","r")}${th("recolte","raw","Net","r")}${th("recolte","alch","Via potion (Lùsty)","r")}${th("recolte","top","Meilleur débouché")}</tr></thead><tbody>
+    ${herbRows.map(h => `<tr><td>${esc(h.n)}${h.beta ? ` <span class="st mute" title="Données bêta, à confirmer">bêta</span>` : ""}</td><td class="r">${h.sk}</td><td>${stReq(s, h.skill)}</td><td class="muted">${h.zones.map(esc).join(", ")}</td><td class="r">${money(X.px(h.n))}</td><td class="r">${money(h.raw)}</td><td class="r" title="${esc(h.pot||"")}">${money(h.alch)}</td><td>${h.how ? `<span class="st ok">${h.how}</span>` : `<span class="muted">pas de prix</span>`}</td></tr>`).join("")}
+    ${fm==="all" ? GUIDE.herbo.inconnues.map(n => `<tr><td>${esc(n)}</td><td class="r muted" colspan="7">non communiqué (skill, zones)</td></tr>`).join("") : ""}</tbody></table></div>
     <p class="muted">Zones indicatives par palier de compétence. Herbes ≥ 195 : données bêta.</p>`;
   }
   return `<p class="muted">Le minage n'a pas encore de guide : seul le niveau est suivi ici.</p>`;
@@ -1997,7 +2000,7 @@ function rerender(keepFocusSel){
 
 function bindView(v){
   const main = document.getElementById("main");
-  main.querySelectorAll("[data-rsub]").forEach(b => b.addEventListener("click", () => { filters.recolte.sub = b.dataset.rsub; rerender(); }));
+  main.querySelectorAll("[data-rsub]").forEach(b => b.addEventListener("click", () => { filters.recolte.sub = b.dataset.rsub; delete sortState.recolte; rerender(); }));
   main.querySelectorAll("[data-f]").forEach(el => {
     const [view,key] = el.dataset.f.split(".");
     el.addEventListener(el.type==="search" ? "input" : "change", () => { filters[view][key] = el.type==="checkbox" ? el.checked : el.value; rerender(); });
