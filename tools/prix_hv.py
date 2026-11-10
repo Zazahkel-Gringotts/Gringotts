@@ -62,6 +62,15 @@ def seed_names():
         names.add(c["n"]); names.update(r[0] for r in c.get("r", []))
     for c in seed.get("ench", []):
         names.update(r[0] for r in c.get("r", []))
+    # Guides de récolte (poissons, plats, cuirs, herbes) : leurs noms doivent aussi recevoir un id et un prix
+    for g in ("peche", "depecage", "herbo"):
+        d = load_json(os.path.join(ROOT, "src", f"guide-{g}.json"), {})
+        for f in d.get("poissons", []):
+            names.add(f["n"])
+            for u in f.get("usages", []):
+                rc = u.get("recette", {}); names.add(rc.get("out")); names.update(r["n"] for r in rc.get("reag", []))
+        names.update(c["n"] for c in d.get("cuirs", []))
+        names.update(h["n"] for h in d.get("herbes", []))
     return sorted(n for n in names if n)
 
 
