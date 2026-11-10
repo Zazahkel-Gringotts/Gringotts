@@ -1033,18 +1033,93 @@ function planDrawer(job){
       return `<tr><td>${esc(e.n)}</td><td class="r">${e.need}</td><td class="r">${e.nearNet}</td><td class="r">${e.prod||"—"}</td><td class="r">${stock}</td><td class="r">${Math.max(0, e.nearNet - stock)}</td></tr>`; }).join("")}
     </tbody></table></div><p class="muted">Besoin cumulé de tous les métiers pour un même composant.</p>` : `<p class="muted">Aucun composant réservé.</p>`}`;
 }
-const GATHER_DEFAULT = ["Herboristerie", "Minage", "Dépeçage", "Pêche"];
-function gatherCard(){
-  const G = {...state.gather};
-  if (skillOf("Minage / divers")) G["Minage"] = skillOf("Minage / divers"); GATHER_DEFAULT.forEach(p => { if (!Object.keys(G).some(k => norm(k)===norm(p))) G[p] = null; });
-  const g = Object.entries(G);
-  return `<div class="tw" style="padding:14px 16px"><b>Récolte & secondaires</b>${g.sort((a,b)=>a[0].localeCompare(b[0])).map(([p, s]) => !s ? `
-    <div style="margin-top:10px;display:flex;justify-content:space-between;gap:8px"><span>${esc(p)}</span><span class="muted">en attente du premier export</span></div>` : `
-    <div style="margin-top:10px"><div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(p)}</span><span><b>${s.l}</b> <span class="muted">/ ${s.m} · ${esc(s.char)}</span></span></div>
-    <div style="height:6px;background:var(--panel2);border-radius:3px;margin-top:6px"><div style="height:100%;width:${Math.min(100,Math.round(s.l/s.m*100))}%;background:var(--silver);border-radius:3px"></div></div></div>`).join("")}</div>`;
+const GUIDE = JSON.parse(document.getElementById("guides").textContent);
+// ---------- Récolte : pêche, dépeçage, herboristerie, minage (skills lus dans l'addon, prix = API HV) ----------
+filters.recolte = {sub:"peche"};
+function gSkill(p){   // niveau de récolte (addon) ; le minage est rangé avec les métiers de craft
+  if (norm(p)==="minage") return skillOf("Minage / divers") || Object.entries(state.gather||{}).find(([k]) => norm(k)==="minage")?.[1] || null;
+  const e = Object.entries(state.gather||{}).find(([k]) => norm(k)===norm(p)); return e ? e[1] : null;
 }
+function recolteCtx(){
+  const PM = priceModel(), cut = state.settings.cut ?? 0.05, pnj = {}; SEED.pnj.forEach(p => pnj[norm(p.n)] = p.p);
+  const px = n => { const v = PM.cur[norm(n)]; return v!=null && isFinite(v) ? v : (pnj[norm(n)] ?? null); };
+  const api = n => !!(state.apiAge && state.apiAge.k ? state.apiAge.k[norm(n)] : PM.cur[norm(n)] != null);
+  const missing = new Set();
+  const net = n => { const p = px(n); if (p==null) { missing.add(n); return null; } return p*(1-cut); };
+  // valeur d'une unité de la matière « mat » dans une recette : (revente nette de la sortie − autres composants) / quantité de mat
+  const useVal = (mat, rc) => { const q = (rc.reag.find(r => norm(r.n)===norm(mat))||{}).q || 1; const out = net(rc.out); if (out==null) return null;
+    let other = 0; for (const r of rc.reag) { if (norm(r.n)===norm(mat)) continue; const p = px(r.n); if (p==null) { missing.add(r.n); return null; } other += p*r.q; }
+    return (out*(rc.qty||1) - other)/q; };
+  return {PM, cut, px, net, api, missing, useVal};
+}
+function recolteBar(p){
+  const s = gSkill(p);
+  return `<div class="tw" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(p)}</b>${s ? `<span><b>${s.l}</b> <span class="muted">/ ${s.m} · ${esc(s.char)}</span></span>` : `<span class="muted">en attente du premier export</span>`}</div>${s ? `<div style="height:6px;background:var(--panel2);border-radius:3px;margin-top:6px"><div style="height:100%;width:${Math.min(100,Math.round(s.l/s.m*100))}%;background:var(--gold);border-radius:3px"></div></div>` : ""}</div>`;
+}
+const stReq = (s, need) => need==null ? `<span class="st mute">n.c.</span>` : !s ? `<span class="muted">${need}</span>` : s.l >= need ? `<span class="st ok">Accessible</span>` : `<span class="st warn">Manque ${need - s.l}</span>`;
+function recolteSub(sub, X){
+  const {net, api, useVal} = X, cuisSk = (skillOf("Cuisine")||{}).l ?? null, alcSk = (skillOf("Alchimie")||{}).l ?? null;
+  const lbl = (txt, v) => v==null ? `<span class="muted">—</span>` : `${money(v)}`;
+  if (sub==="peche") {
+    const s = gSkill("Pêche"), skMin = {};
+    GUIDE.peche.zones.forEach(z => z.poissons.forEach(f => { if (z.skill!=null && (skMin[f]==null || z.skill < skMin[f])) skMin[f] = z.skill; }));
+    const fish = GUIDE.peche.poissons.map(f => {
+      let cook = null, alch = null, cs = null, as = null;
+      f.usages.forEach(u => { const v = useVal(f.n, u.recette); if (v==null) return;
+        if (u.type==="cuisine" && (cook==null || v > cook)) { cook = v; cs = u.skill; } if (u.type==="alchimie" && (alch==null || v > alch)) { alch = v; as = u.skill; } });
+      const raw = net(f.n), best = Math.max(raw ?? -1e9, cook ?? -1e9, alch ?? -1e9);
+      const how = best===-1e9 ? null : best===raw ? "Brut HV" : best===cook ? "Cuisiné" : "Alchimie";
+      return {...f, raw, cook, alch, cs, as, best: best===-1e9 ? null : best, how, sk: skMin[f.n] ?? null};
+    }).sort((a,b) => (b.best ?? -1e9) - (a.best ?? -1e9));
+    const bestOf = new Map(fish.map(f => [f.n, f.best]));
+    const zones = GUIDE.peche.zones.map(z => { const bf = z.poissons.map(n => [n, bestOf.get(n)]).filter(x => x[1]!=null).sort((a,b) => b[1]-a[1])[0]; return {...z, bf}; }).sort((a,b) => (a.skill ?? 1e9) - (b.skill ?? 1e9));
+    return `<h2>Poissons</h2><div class="tw scroll"><table><thead><tr><th>Poisson</th><th class="r">Prix HV</th><th class="r">Net (−taxe)</th><th class="r">Cuisiné</th><th class="r">Alchimie</th><th>Meilleur débouché</th><th>Skill pêche</th></tr></thead><tbody>
+    ${fish.map(f => `<tr><td>${esc(f.n)}</td><td class="r">${money(X.px(f.n))}</td><td class="r">${lbl("", f.raw)}</td><td class="r" title="${f.cs!=null ? "Cuisine "+f.cs+(cuisSk!=null && cuisSk < f.cs ? " (ton niveau : "+cuisSk+")" : "") : ""}">${lbl("", f.cook)}</td><td class="r" title="${f.as!=null ? "Alchimie "+f.as+(alcSk!=null && alcSk < f.as ? " (ton niveau : "+alcSk+")" : "") : ""}">${lbl("", f.alch)}</td><td>${f.how ? `<span class="st ok">${f.how}</span>` : `<span class="muted">pas de prix</span>`}</td><td>${stReq(s, f.sk)} <span class="muted">${f.sk ?? ""}</span></td></tr>`).join("")}</tbody></table></div>
+    <p class="muted">Valeur par poisson : revente nette de l'objet cuisiné/alchimique moins les autres composants, divisée par le nombre de poissons utilisés. Prix d'achat des autres composants : API HV, sinon PNJ.</p>
+    <h2>Zones</h2><div class="tw scroll"><table><thead><tr><th>Zone</th><th class="r">Skill requis</th><th>Statut</th><th>Poissons</th><th>Meilleur</th></tr></thead><tbody>
+    ${zones.map(z => `<tr><td>${esc(z.zone)}</td><td class="r">${z.skill ?? "—"}</td><td>${stReq(s, z.skill)}</td><td class="muted">${z.poissons.map(esc).join(", ")}</td><td>${z.bf ? `${esc(z.bf[0])} · ${money(z.bf[1])}` : `<span class="muted">—</span>`}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  if (sub==="depecage") {
+    const s = gSkill("Dépeçage");
+    const cu = GUIDE.depecage.cuirs.map(c => ({...c, p: X.px(c.n), nt: net(c.n)}));
+    return `<h2>Où dépecer par niveau de bête</h2><div class="tw scroll"><table><thead><tr><th>Palier</th><th>Statut</th><th>Zones (niveau des bêtes)</th><th>Cuirs</th></tr></thead><tbody>
+    ${GUIDE.depecage.paliers.map(p => `<tr><td>${esc(p.label)}</td><td>${stReq(s, p.de)}</td><td class="muted">${p.zones.map(z => `${esc(z.zone)} ${z.min}-${z.max}`).join(" · ")}</td><td>${p.cuirs.map(n => { const c = cu.find(x => x.n===n); return `${esc(n)} ${c && c.nt!=null ? money(c.nt) : ""}`; }).join("<br>")}</td></tr>`).join("")}</tbody></table></div>
+    <h2>Cuirs</h2><div class="tw scroll"><table><thead><tr><th>Cuir</th><th class="r">Prix HV</th><th class="r">Net</th><th class="r">Skill requis</th><th>Niveau des bêtes</th><th>Statut</th></tr></thead><tbody>
+    ${cu.sort((a,b) => (b.nt ?? -1) - (a.nt ?? -1)).map(c => `<tr><td>${esc(c.n)}</td><td class="r">${money(c.p)}</td><td class="r">${money(c.nt)}</td><td class="r">${c.skill ?? "—"}</td><td>${esc(c.niveaux || "n.c.")}</td><td>${stReq(s, c.skill)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted">Vente brute à l'HV uniquement. Niveaux de bêtes d'après les règles Classic : à confirmer en jeu.</p>`;
+  }
+  if (sub==="herbo") {
+    const s = gSkill("Herboristerie");
+    const herbs = GUIDE.herbo.herbes.map(h => {
+      let best = null, pot = null;
+      SEED.crafts.forEach(c => { const r = (c.r||[]).find(x => norm(x[0])===norm(h.n)); if (!r) return;
+        const v = useVal(h.n, {out: c.out || c.n, qty: 1, reag: c.r.map(x => ({n:x[0], q:x[1]}))}); if (v!=null && (best==null || v > best)) { best = v; pot = c.n; } });
+      const raw = net(h.n), top = Math.max(raw ?? -1e9, best ?? -1e9);
+      return {...h, raw, alch: best, pot, how: top===-1e9 ? null : top===raw ? "Brut HV" : "Potion", top: top===-1e9 ? null : top};
+    }).sort((a,b) => (b.top ?? -1e9) - (a.top ?? -1e9));
+    return `<h2>Herbes</h2><div class="tw scroll"><table><thead><tr><th>Herbe</th><th class="r">Skill requis</th><th>Statut</th><th>Zones</th><th class="r">Prix HV</th><th class="r">Net</th><th class="r">Via potion (Lùsty)</th><th>Meilleur débouché</th></tr></thead><tbody>
+    ${herbs.map(h => `<tr><td>${esc(h.n)}${h.beta ? ` <span class="st mute" title="Données bêta, à confirmer">bêta</span>` : ""}</td><td class="r">${h.skill}</td><td>${stReq(s, h.skill)}</td><td class="muted">${h.zones.map(esc).join(", ")}</td><td class="r">${money(X.px(h.n))}</td><td class="r">${money(h.raw)}</td><td class="r" title="${esc(h.pot||"")}">${money(h.alch)}</td><td>${h.how ? `<span class="st ok">${h.how}</span>` : `<span class="muted">pas de prix</span>`}</td></tr>`).join("")}
+    ${GUIDE.herbo.inconnues.map(n => `<tr><td>${esc(n)}</td><td class="r muted" colspan="7">non communiqué (skill, zones)</td></tr>`).join("")}</tbody></table></div>
+    <p class="muted">Zones indicatives par palier de compétence. Herbes ≥ 195 : données bêta.</p>`;
+  }
+  return `<p class="muted">Le minage n'a pas encore de guide : seul le niveau est suivi ici.</p>`;
+}
+views.recolte = () => {
+  const f = filters.recolte, X = recolteCtx();
+  const subs = [["peche","Pêche","Pêche"],["depecage","Dépeçage","Dépeçage"],["herbo","Herboristerie","Herboristerie"],["minage","Minage","Minage"]];
+  if (!subs.some(x => x[0]===f.sub)) f.sub = "peche";
+  const body = recolteSub(f.sub, X);
+  const miss = [...X.missing].sort((a,b) => a.localeCompare(b,"fr"));
+  return `<h1>Récolte</h1>
+  <p class="lede">Où et quoi récolter pour gagner de l'or, selon tes niveaux (export Gringotts) et les prix HV.</p>
+  <div class="toolbar" role="tablist">${subs.map(([k,l]) => `<button class="btn" role="tab" data-rsub="${k}" aria-selected="${f.sub===k}" style="${f.sub===k ? "border-color:var(--gold);color:var(--gold)" : ""}">${l}</button>`).join("")}</div>
+  <div class="prog" style="margin-bottom:14px">${subs.map(x => recolteBar(x[2])).join("")}</div>
+  ${body}
+  ${miss.length ? `<div class="note warn"><details><summary><b>${miss.length}</b> objet(s) sans prix : le bot les cherchera à son prochain passage</summary>${miss.map(esc).join(", ")}</details></div>` : ""}
+  <div class="note warn">Guides issus de sources communautaires (Mamytwink, Kami Labs), non vérifiés en jeu.</div>`;
+};
 function progressionBlock(){
-  const jobs = jobsAll().filter(j => j !== "Minage / divers");   // le minage est affiché avec la récolte
+  const jobs = jobsAll().filter(j => j !== "Minage / divers");   // le minage est suivi dans l'onglet Récolte
   return `<h2>Progression des métiers</h2><div class="prog">${jobs.map(job => {
     const s = skillOf(job), rec = ALL_RECIPES().filter(r => r.job===job), noSk = rec.length && rec.every(r => r.sk==null);
     if (!s) return `<div class="tw" style="padding:14px 16px"><b>${esc(job)}</b><p class="muted" style="margin:6px 0 12px">Niveau inconnu : faites un export Gringotts après vous être connecté avec le perso qui a ce métier.</p>${planTile(job)}</div>`;
@@ -1070,7 +1145,7 @@ function progressionBlock(){
       ${now.length ? `<table style="margin-bottom:10px"><tbody>${now.slice(0,5).map(r => `<tr><td>${esc(r.n)}</td><td class="r">${r.sk}</td><td class="muted">${esc(r.src||"—")}</td></tr>`).join("")}</tbody></table>${now.length>5?`<button class="btn" data-f-learnable="${esc(job)}">Voir les ${now.length}</button>`:""}` : `<p style="margin:0 0 10px">Rien à apprendre à ce niveau.</p>`}
 `}
       ${noSk ? "" : `<div style="margin-top:8px">${nextSk!==null ? `Prochain palier : <b>${nextSk}</b> (${nextN} recette${nextN>1?"s":""}, encore ${nextSk - s.l} point${nextSk-s.l>1?"s":""})` : `<span class="muted">Toutes les recettes du dashboard sont accessibles.</span>`}</div>`}
-    </div>`; }).join("")}${gatherCard()}</div>`;
+    </div>`; }).join("")}</div>`;
 }
 views.recettes = () => {
   const f = filters.recettes;
@@ -1628,6 +1703,7 @@ function rerender(keepFocusSel){
 
 function bindView(v){
   const main = document.getElementById("main");
+  main.querySelectorAll("[data-rsub]").forEach(b => b.addEventListener("click", () => { filters.recolte.sub = b.dataset.rsub; rerender(); }));
   main.querySelectorAll("[data-f]").forEach(el => {
     const [view,key] = el.dataset.f.split(".");
     el.addEventListener(el.type==="search" ? "input" : "change", () => { filters[view][key] = el.type==="checkbox" ? el.checked : el.value; rerender(); });
@@ -1898,8 +1974,16 @@ function addonReport(plan){
   ${Object.keys(o.vendor).length ? `<div class="note ok">${Object.keys(o.vendor).length} prix de marchand PNJ relevés (utilisés comme prix d'achat).</div>` : ""}
   ${o.deposits.length ? `<div class="note ok">${o.deposits.length} dépôt(s) de mise en vente relevé(s) (utilisés pour estimer le coût des invendus).</div>` : ""}
   ${o.trades.length || o.cds.length ? `<div class="note ok">${o.trades.length} transaction(s) HV (ventes, achats, annonces, expirées) · ${o.cds.length} temps de recharge.</div>` : ""}
-  ${o.unresolved.length ? `<div class="note warn">${o.unresolved.length} objet(s) jamais vus par l'addon (pas de prix) : ${o.unresolved.slice(0,10).map(esc).join(", ")}${o.unresolved.length>10?"…":""}. Ils seront identifiés après un scan Auctionator où ils apparaissent.</div>` : ""}
+  ${noPriceNote(o)}
   <div class="note">Enregistrer : les prix deviennent l'import du ${fmtDate(today())}, le stock est remplacé par le total exporté (objets absents = 0), les recettes et niveaux des métiers relevés sont synchronisés.</div>`;
+}
+function noPriceNote(o){
+  // Objets suivis par le dashboard sans prix API (liste réelle). Repli sur la note de l'addon tant qu'aucun prix API n'est reçu.
+  const k = state.apiAge && state.apiAge.k;
+  if (!k) return o.unresolved.length ? `<div class="note warn">${o.unresolved.length} objet(s) jamais vus par l'addon (pas de prix) : ${o.unresolved.slice(0,10).map(esc).join(", ")}${o.unresolved.length>10?"…":""}. Ils seront identifiés après un scan Auctionator où ils apparaissent.</div>` : "";
+  const miss = [...new Set((M.comps||[]).filter(c => !k[norm(c.n)]).map(c => c.n))].sort((a,b) => a.localeCompare(b,"fr"));
+  if (!miss.length) return `<div class="note ok">Tous les composants suivis ont un prix API.</div>`;
+  return `<div class="note warn"><details><summary><b>${miss.length}</b> composant(s) suivi(s) sans prix API (introuvables dans l'HV ou jamais mis en vente)</summary>${miss.map(esc).join(", ")}</details></div>`;
 }
 function bindImport(){
   const ta = document.getElementById("impText"), btnA = document.getElementById("impApply"), outEl = document.getElementById("impOut");
