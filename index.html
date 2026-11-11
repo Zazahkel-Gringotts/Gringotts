@@ -1661,10 +1661,43 @@ views.finances = () => {
 views.or = views.finances;   // ancien lien #or
 // ---------- « Envoyer au jeu » : décisions du dashboard pour l'addon (/gt import) ----------
 const cu = v => Math.round((v||0)*10000);
+// Étiquettes d'action par objet pour l'addon : A;nom;rôle(C craft|R composant);code(P produire|V vendre|B acheter|S standby);quantité;écart % à la médiane;précision
+function gameFlags(){
+  const S = state.settings, PM = priceModel(), th = (S.buyTh ?? 0.1)*100, net1 = 1 - S.cut, out = [];
+  const dpc = k => { const c = PM.cur[k], m = PM.med30(k); return (c!=null && m) ? Math.round((c/m - 1)*100) : null; };
+  const A = (n, role, code, qty, d, label) => out.push(`A;${n};${role};${code};${Math.round(qty||0)};${d===null||d===undefined ? "" : d};${label||""}`);
+  const mk = c => (c.adv && c.adv.qty > 0) ? c.adv.qty : 0;
+  const learned = M.crafts.filter(c => c.learned && c.out);
+  const hot = c => { const d = dpc(norm(c.out)); return c.net > 0 && d !== null && d >= th; };   // prix du produit nettement au-dessus de la médiane : vendre de suite
+  const toMake = learned.filter(c => c.act==="craft" && mk(c) > 0);
+  // Crafts (produits finis) : rouge = vendre de suite (prix haut), vert = produire et garder en stock, violet = acheter pour revendre, orange = standby
+  learned.forEach(c => {
+    const k = norm(c.out), d = dpc(k), have = c.adv ? c.adv.have : 0, make = c.act==="craft" ? mk(c) : 0; let any = false;
+    if (hot(c) && (have > 0 || make > 0)) { A(c.out, "C", "V", have + make, d, make > 0 ? `dont ${make} à produire` : ""); any = true; }
+    else if (make > 0) { A(c.out, "C", "P", make, d); any = true; }
+    if (c.net > 0 && d !== null && d <= -th && c.adv && c.adv.rate > 0) { A(c.out, "C", "B", Math.max(1, (c.adv.units||0) - have), d); any = true; }
+    if (!any && (d !== null || c.net !== null)) A(c.out, "C", "S", 0, d);
+  });
+  // Composants : craft à vendre de suite (rouge) / craft à produire et garder (vert) / composant à vendre (rouge, HV ou PNJ) / acheter (violet) / standby (orange)
+  const usage = (c, wantHot) => { let q = 0; const names = []; toMake.filter(cr => hot(cr)===wantHot).forEach(cr => { const l = cr.lines.find(x => norm(x.n)===c.k); if (l) { q += l.q*mk(cr); names.push(cr.n); } }); return {q, lbl: names.slice(0,2).join(" / ") + (names.length > 2 ? " +" + (names.length - 2) : "")}; };
+  M.comps.forEach(c => {
+    const d = dpc(c.k), uh = usage(c, true), ug = usage(c, false), ad = c.adv || {}; let any = false;
+    if (uh.q > 0) { A(c.n, "R", "V", uh.q, d, "craft:" + uh.lbl); any = true; }
+    if (ug.q > 0) { A(c.n, "R", "P", ug.q, d, ug.lbl); any = true; }
+    if (ad.kind==="sell" && ad.sell > 0) { const np = npcSell(c.n), hv = c.cur!=null ? c.cur*net1 : null; A(c.n, "R", "V", ad.sell, d, (np!=null && (hv===null || np > hv)) ? "pnj" : "hv"); any = true; }
+    if (ad.kind==="buy" && ad.buy > 0) { A(c.n, "R", "B", ad.buy, d); any = true; }
+    if (!any) A(c.n, "R", "S", 0, d);
+  });
+  M.pnjRows.forEach(c => { const uh = usage(c, true), ug = usage(c, false);
+    if (uh.q > 0) A(c.n, "R", "V", uh.q, null, "craft:" + uh.lbl);
+    if (ug.q > 0) A(c.n, "R", "P", ug.q, null, ug.lbl);
+    if (c.toBuy > 0) A(c.n, "R", "B", c.toBuy, null, "pnj"); });
+  return out;
+}
 function gameText(){
-  const L = [`GTI1;${Math.floor(Date.now()/1000)};2`];
+  const L = [`GTI1;${Math.floor(Date.now()/1000)};3`];
   const rows = [...M.comps, ...M.pnjRows];
-  Object.values(M.reserve).filter(e => e.net > 0).forEach(e => L.push(`R;${e.n};${e.net}`));
+  gameFlags().forEach(l => L.push(l));
   rows.forEach(c => { if (c.target || c.toBuy) L.push(`C;${c.n};${c.target||0};${c.toBuy||0}`); });
   M.comps.forEach(c => { const mx = c.med ?? c.cur; if (mx) L.push(`M;${c.n};${cu(mx)}`); });
   M.crafts.forEach(c => { if (c.net!==null) L.push(`N;${c.out};${cu(c.net)};${c.roi!==null ? Math.round(c.roi*100) : ""}`); });
@@ -1675,7 +1708,7 @@ function gameText(){
   return L.join("\n");
 }
 function gameBox(){
-  return `<div class="note"><p style="margin:0 0 8px">En jeu : <code>/gt import</code>, collez ce texte, puis « Importer ». Contenu : composants réservés (contour rouge), cibles et achats, prix d'achat max, marges et prix plancher (infobulle), envois entre persos, liste Auctionator « Gringotts - Réassort ».</p>
+  return `<div class="note"><p style="margin:0 0 8px">En jeu : <code>/gt import</code>, collez ce texte, puis « Importer ». Contenu : étiquettes par objet (contour vert produire, rouge vendre, violet acheter, orange standby), cibles et achats, prix d'achat max, marges et prix plancher (infobulle), envois entre persos, liste Auctionator « Gringotts - Réassort ».</p>
     <div class="copybox"><textarea id="gameTxt" readonly></textarea><button class="btn" data-copy="gameTxt">Copier</button></div></div>`;
 }
 let pending = null, pendingAddon = null;
