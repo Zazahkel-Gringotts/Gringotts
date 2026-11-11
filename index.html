@@ -703,7 +703,7 @@ function rebuild(){
   const manual = {"pierre dense":0.01, "pierre lourde":0.0025};
   Object.entries(state.manual).forEach(([n,p]) => { if (p!==null && p!=="" && isFinite(p)) manual[norm(n)] = +p; });
   // Coût d'achat d'un composant : manuel > PNJ > prix HV actuel
-  const VEND = state.vendor || {}, VSELL = state.vsell || {};
+  const VEND = Object.fromEntries(Object.entries(state.vendor || {}).filter(([k, v]) => v.u !== 0)), VSELL = state.vsell || {};   // marchand en quantité limitée (u=0) : ignoré, on garde le prix HV
   // Coût d'achat : prix marchand relevé > manuel > liste PNJ > HV
   const buyPrice = n => { const k = norm(n); if (VEND[k]) return {p:VEND[k].p,src:"PNJ"}; if (manual[k]!==undefined) return {p:manual[k],src:"manuel"}; if (pnj[k]!==undefined) return {p:pnj[k],src:"PNJ"}; if (cur[k]!==undefined) return {p:cur[k],src:"HV"}; return {p:null,src:"manquant"}; };
   const sellRef = n => { const k = norm(n); const c = cur[k] ?? null, m = med30(k);
@@ -890,15 +890,16 @@ function rebuild(){
   const comps = hvList.map(s => {
     const vp = VEND[norm(s.n)];
     const k = norm(s.n); const c = cur[k] ?? null; const m = med30(k);
-    const delta = (c!==null && m) ? c/m - 1 : null;
+    const pnjOnly = !!vp;   // vendu sans limite par un marchand : seul le prix PNJ compte (pas de signal HV)
+    const delta = pnjOnly ? null : (c!==null && m) ? c/m - 1 : null;
     const sig = delta===null ? "mute" : delta <= -S.buyTh ? "ok" : delta >= S.buyTh ? "bad" : "warn";
-    const sigTxt = delta===null ? "Pas de donnée" : delta <= -S.buyTh ? "Acheter" : delta >= S.buyTh ? "Trop cher" : "Neutre";
+    const sigTxt = pnjOnly ? "PNJ" : delta===null ? "Pas de donnée" : delta <= -S.buyTh ? "Acheter" : delta >= S.buyTh ? "Trop cher" : "Neutre";
     const pr = profOf(k); const best = pickDay(pr && pr.prof, "min");
     const stock = stockOf(s.n); const a = auto[k]; const manualT = state.target[k] !== undefined;
     const target = manualT ? +state.target[k] : (a ? a.target : 0);
     const res = reserve[k] || null;
     const toBuy = Math.max(0, target - stock, res ? res.nearNet - stock : 0);
-    return {n:s.n, k, npc: npcSell(s.n), used: used.has(k) || !!res, res, why: a ? a.reason : "", vend: vp ? vp.p : null, age: ageOf(k), stale: stale(k), ob: obtention(s.n, craftOuts), st: stackSize(s.n, S), manualT, autoT: a ? a.target : 0, cur:c, med:m, delta, sig, sigTxt, best, bestDay: dayLbl(best), bestOrd: dayOrd(best), stock, target, toBuy, refill: (vp ? vp.p : c)===null?null:toBuy*(vp ? vp.p : c), value: c===null?(vp ? stock*vp.p : null):stock*c, hist:hist[k]||[]};
+    return {n:s.n, k, pnjOnly, npc: npcSell(s.n), used: used.has(k) || !!res, res, why: a ? a.reason : "", vend: vp ? vp.p : null, age: ageOf(k), stale: stale(k), ob: obtention(s.n, craftOuts), st: stackSize(s.n, S), manualT, autoT: a ? a.target : 0, cur:c, med:m, delta, sig, sigTxt, best, bestDay: dayLbl(best), bestOrd: dayOrd(best), stock, target, toBuy, refill: (vp ? vp.p : c)===null?null:toBuy*(vp ? vp.p : c), value: c===null?(vp ? stock*vp.p : null):stock*c, hist:hist[k]||[]};
   });
   const pnjRows = SEED.pnj.map(p => { const k = norm(p.n); const stock = state.pnjStock[k] !== undefined ? +state.pnjStock[k] : (state.stockZero ? 0 : p.stock);
     const a = auto[k]; const manualT = state.target[k] !== undefined;
@@ -958,6 +959,7 @@ function rebuild(){
     const unit = c.vend ?? c.cur, buyRate = sl ? sl.bought/30 : 0;
     let buy = 0, sell = 0, extra = 0, kind = "keep", note = "";
     if (unit===null) { kind = "none"; note = "prix inconnu"; }
+    else if (c.pnjOnly) { buy = need; if (buy) { kind = "buy"; note = "marchand PNJ"; } }
     else if (c.sig==="bad") { sell = surplus; if (sell) kind = "sell"; else if (need) { kind = "wait"; note = "prix trop haut"; } }
     else { if (c.sig==="ok" && c.used && !falling && !slotsFull) extra = Math.max(Math.ceil(keep*0.5), Math.ceil(buyRate*H));
       buy = need + extra; if (buy) kind = "buy";
@@ -1681,12 +1683,12 @@ function gameFlags(){
   // Composants : craft à vendre de suite (rouge) / craft à produire et garder (vert) / composant à vendre (rouge, HV ou PNJ) / acheter (violet) / standby (orange)
   const usage = (c, wantHot) => { let q = 0; const names = []; toMake.filter(cr => hot(cr)===wantHot).forEach(cr => { const l = cr.lines.find(x => norm(x.n)===c.k); if (l) { q += l.q*mk(cr); names.push(cr.n); } }); return {q, lbl: names.slice(0,2).join(" / ") + (names.length > 2 ? " +" + (names.length - 2) : "")}; };
   M.comps.forEach(c => {
-    const d = dpc(c.k), uh = usage(c, true), ug = usage(c, false), ad = c.adv || {}; let any = false;
+    const d = c.pnjOnly ? null : dpc(c.k), uh = usage(c, true), ug = usage(c, false), ad = c.adv || {}; let any = false;
     if (uh.q > 0) { A(c.n, "R", "V", uh.q, d, "craft:" + uh.lbl); any = true; }
     if (ug.q > 0) { A(c.n, "R", "P", ug.q, d, ug.lbl); any = true; }
     if (ad.kind==="sell" && ad.sell > 0) { const np = npcSell(c.n), hv = c.cur!=null ? c.cur*net1 : null; A(c.n, "R", "V", ad.sell, d, (np!=null && (hv===null || np > hv)) ? "pnj" : "hv"); any = true; }
-    if (ad.kind==="buy" && ad.buy > 0) { A(c.n, "R", "B", ad.buy, d); any = true; }
-    if (!any) A(c.n, "R", "S", 0, d);
+    if (ad.kind==="buy" && ad.buy > 0) { A(c.n, "R", "B", ad.buy, d, c.pnjOnly ? "pnj" : ""); any = true; }
+    if (!any && !c.pnjOnly) A(c.n, "R", "S", 0, d);
   });
   M.pnjRows.forEach(c => { const uh = usage(c, true), ug = usage(c, false);
     if (uh.q > 0) A(c.n, "R", "V", uh.q, null, "craft:" + uh.lbl);
@@ -2180,7 +2182,7 @@ function parseAddon(text){
     else if (f[0]==="G") o.guild = {n:f[1], t:+f[2]||0, tabs:f[3]||""};
     else if (f[0]==="P") { const c = +f[2]; if (c>0) { o.prices[f[1]] = c/10000; if (f[3]!=="" && f[3]!==undefined) o.ages[norm(f[1])] = +f[3]; if (+f[4] > 0) (o.itemIds = o.itemIds || {})[norm(f[1])] = +f[4]; } }
     else if (f[0]==="T") o.trades.push({k:f[1], t:+f[2]||0, q:+f[3]||1, c:(+f[4]||0)/10000, n:f.slice(5).join(";")});
-    else if (f[0]==="V") { const c = parseFloat(f[2]); if (c>0) o.vendor[norm(f[1])] = {n:f[1], p:c/10000}; }
+    else if (f[0]==="V") { const c = parseFloat(f[2]); if (c>0) { const e = {n:f[1], p:c/10000}; if (f[3]==="0" || f[3]==="1") e.u = +f[3]; o.vendor[norm(f[1])] = e; } }   // 4e champ : 1 = quantité illimitée, 0 = limitée
     else if (f[0]==="W") { const c = parseFloat(f[2]); if (c>0) o.vsell[norm(f[1])] = c/10000; }
     else if (f[0]==="DP") o.deposits.push({t:+f[1]||0, q:+f[2]||1, d:(+f[3]||0)/10000, n:f.slice(4).join(";")});
     else if (f[0]==="D") o.cds.push({char:f[1], r:+f[2]||0, n:f.slice(3).join(";")});
