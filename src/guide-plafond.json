@@ -1,0 +1,65 @@
+{
+ "source": "ConquestCapped (guide du marché noir, mis à jour le 23/10/2026) ; prix relevés en bêta et en jeu",
+ "verifie": "à confirmer en jeu (page 1 et 2 du vendeur)",
+ "vendeur": "Mister Graphed",
+ "lieu": "Port de Poudremèche, Rives claires (/way 78.2 51.8)",
+ "note": "Vendeur sans limite de stock constatée : le prix est un PLAFOND (on achète à l'HV si c'est moins cher), pas un prix d'achat fixe.",
+ "items": [
+  {
+   "n": "Cuir immaculé",
+   "p": 5
+  },
+  {
+   "n": "Lichen à volants",
+   "p": 5
+  },
+  {
+   "n": "Pyrite",
+   "p": 5
+  },
+  {
+   "n": "Peau immaculée",
+   "p": 20
+  },
+  {
+   "n": "Chaperose",
+   "p": 20
+  },
+  {
+   "n": "Bauxite",
+   "p": 20
+  },
+  {
+   "n": "Écaille immaculée",
+   "p": 50
+  },
+  {
+   "n": "Stranglevigne",
+   "p": 50
+  },
+  {
+   "n": "Pechblende",
+   "p": 50
+  },
+  {
+   "n": "Lotus mortifère",
+   "p": 50
+  },
+  {
+   "n": "Gangrecristal",
+   "p": 50
+  },
+  {
+   "n": "Torbernite",
+   "p": 50
+  },
+  {
+   "n": "Lotus noir",
+   "p": 50
+  },
+  {
+   "n": "Cristal des arcanes",
+   "p": 50
+  }
+ ]
+}

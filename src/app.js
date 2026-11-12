@@ -411,7 +411,8 @@ function rebuild(){
   // Coût d'achat d'un composant : manuel > PNJ > prix HV actuel
   const VEND = Object.fromEntries(Object.entries(state.vendor || {}).filter(([k, v]) => v.u !== 0)), VSELL = state.vsell || {};   // marchand en quantité limitée (u=0) : ignoré, on garde le prix HV
   // Coût d'achat : prix marchand relevé > manuel > liste PNJ > HV
-  const buyPrice = n => { const k = norm(n); if (VEND[k]) return {p:VEND[k].p,src:"PNJ"}; if (manual[k]!==undefined) return {p:manual[k],src:"manuel"}; if (pnj[k]!==undefined) return {p:pnj[k],src:"PNJ"}; if (cur[k]!==undefined) return {p:cur[k],src:"HV"}; return {p:null,src:"manquant"}; };
+  const CAP = Object.fromEntries(((GUIDE.plafond||{}).items||[]).map(i => [norm(i.n), i.p]));   // vendeur du marché noir : plafond de prix (min HV, plafond)
+  const buyPrice = n => { const k = norm(n); if (VEND[k]) return {p:VEND[k].p,src:"PNJ"}; if (manual[k]!==undefined) return {p:manual[k],src:"manuel"}; if (pnj[k]!==undefined) return {p:pnj[k],src:"PNJ"}; const cp = CAP[k]; if (cur[k]!==undefined) return cp!==undefined && cp < cur[k] ? {p:cp,src:"plafond"} : {p:cur[k],src:"HV"}; if (cp!==undefined) return {p:cp,src:"plafond"}; return {p:null,src:"manquant"}; };
   const sellRef = n => { const k = norm(n); const c = cur[k] ?? null, m = med30(k);
     let p = c; if (S.basis==="prudent") p = (c!==null && m!==null) ? Math.min(c,m) : (c ?? m); else if (S.basis==="mediane") p = m ?? c;
     return {p, cur:c, med:m}; };

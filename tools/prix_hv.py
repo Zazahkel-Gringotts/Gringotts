@@ -71,6 +71,8 @@ def seed_names():
                 rc = u.get("recette", {}); names.add(rc.get("out")); names.update(r["n"] for r in rc.get("reag", []))
         names.update(c["n"] for c in d.get("cuirs", []))
         names.update(h["n"] for h in d.get("herbes", []))
+    # Vendeur du marché noir (plafond de prix) : ses composants doivent aussi recevoir un id et un prix HV
+    names.update(i["n"] for i in load_json(os.path.join(ROOT, "src", "guide-plafond.json"), {}).get("items", []))
     return sorted(n for n in names if n)
 
 

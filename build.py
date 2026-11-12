@@ -8,7 +8,7 @@ out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else SRC.parent / "index.ht
 import json
 def part(n):
     if n == "seed.json":   # les guides de récolte sont embarqués juste après la graine, dans un second bloc JSON
-        g = {k: json.loads((SRC / f"guide-{k}.json").read_text(encoding="utf-8")) for k in ("peche", "depecage", "herbo")}
+        g = {k: json.loads((SRC / f"guide-{k}.json").read_text(encoding="utf-8")) for k in ("peche", "depecage", "herbo", "plafond")}
         return (SRC / n).read_text(encoding="utf-8") + '</script>\n<script id="guides" type="application/json">' + json.dumps(g, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     return (SRC / n).read_text(encoding="utf-8")
 out.write_text("".join(part(n) for n in ORDER), encoding="utf-8", newline="")
