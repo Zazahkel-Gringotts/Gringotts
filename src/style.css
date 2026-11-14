@@ -215,7 +215,7 @@ main a:not(.btn):not(.kpi){color:var(--info);text-underline-offset:2px}main a:no
   .mh{font-family:var(--serif);font-size:19px;margin:14px 2px 8px}
   .mlist{border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .mrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer}
-  .mrow:first-child{border-top:0}.mrow .ml{min-width:0}.mrow .ml b{display:block;overflow-wrap:anywhere}
+  .mrow:first-child{border-top:0}.mrow .ml{min-width:0}.mrow .ml>b{display:block;overflow-wrap:anywhere}
   .mrow .mr{text-align:right;white-space:nowrap}.mrow .bad{color:var(--bad)}
   .mnone{padding:16px;color:var(--muted);text-align:center}
   .mseg{display:flex;gap:6px;margin:0 0 10px}
