@@ -1,490 +1,493 @@
-WFC1;1794916188;API;110
-P;Acide de larve;5200;;18512
-P;Acide sulfurique;699;;249410
-P;Aciérite sauvage;175;;3355
-P;Aigue-marine;1995;;7909
-P;Aile de busard;320;;3404
-P;Aile de busard grillée;563;;4457
-P;Aile de chauve-souris charnue;510;;12223
-P;Aileron de murloc;76;;1468
-P;Air élémentaire;1766;;7069
-P;Anguille pierre-écaille;190;;13422
-P;Ardeur de palourde géante;525;;6038
-P;Aveuglette;1418;;8839
-P;Barracuda luisant cru;130;;13754
-P;Barracuda luisant cuit;382;;13927
-P;Barre d'acier;835;;3859
-P;Barre d'arcanite;436200;;12360
-P;Barre d'argent;533;;2842
-P;Barre d'azerothium;4800;;249726
-P;Barre d'or;1119;;3577
-P;Barre d'étain;154;;3576
-P;Barre de bronze;180;;2841
+WFC1;1794941858;API;110
+P;Acide de larve;9000;;18512
+P;Acide sulfurique;604;;249410
+P;Aciérite sauvage;147;;3355
+P;Aigue-marine;1050;;7909
+P;Aile de busard;316;;3404
+P;Aile de busard grillée;440;;4457
+P;Aile de chauve-souris charnue;515;;12223
+P;Aileron de murloc;45;;1468
+P;Air élémentaire;1742;;7069
+P;Anguille pierre-écaille;169;;13422
+P;Ardeur de palourde géante;524;;6038
+P;Aveuglette;1334;;8839
+P;Barracuda luisant cru;119;;13754
+P;Barracuda luisant cuit;301;;13927
+P;Barre d'acier;905;;3859
+P;Barre d'arcanite;448698;;12360
+P;Barre d'argent;544;;2842
+P;Barre d'azerothium;3800;;249726
+P;Barre d'or;990;;3577
+P;Barre d'étain;135;;3576
+P;Barre de bronze;173;;2841
 P;Barre de cuivre;170;;2840
-P;Barre de fer;299;;3575
-P;Barre de légionite;380000;;251290
-P;Barre de mithril;1165;;3860
-P;Barre de sombrefer;14000;;11371
-P;Barre de thorium;2199;;12359
-P;Barre de thorium enchanté;9555;;12655
-P;Barre de thorium lourd;1994;;251291
-P;Barre de vrai-argent;1380;;6037
-P;Barre d’azerothium;4800;;249726
-P;Bauxite;3449;;249425
-P;Beignet de crabe;199;;2683
-P;Bisque de tortue apaisante;300;;3729
-P;Bière au malt Rhapsody;110;;2894
-P;Bois d'étoile;4439;;11291
-P;Bois simple;43;;4470
-P;Bonne vieille viande de brochepâle;344;;274976
-P;Bouche-noire huileux;200;;6358
-P;Boudin;45;;3220
-P;Boulettes fumées du désert;4200;;20452
-P;Breuvage de détection de l’invisibilité inférieure;155;;3828
-P;Breuvage de détection des démons;695;;9233
+P;Barre de fer;410;;3575
+P;Barre de légionite;365000;;251290
+P;Barre de mithril;1244;;3860
+P;Barre de sombrefer;13143;;11371
+P;Barre de thorium;1894;;12359
+P;Barre de thorium enchanté;9048;;12655
+P;Barre de thorium lourd;4358;;251291
+P;Barre de vrai-argent;1597;;6037
+P;Barre d’azerothium;3800;;249726
+P;Bauxite;509;;249425
+P;Beignet de crabe;106;;2683
+P;Bisque de tortue apaisante;297;;3729
+P;Bière au malt Rhapsody;99;;2894
+P;Bois d'étoile;3888;;11291
+P;Bois simple;41;;4470
+P;Bonne vieille viande de brochepâle;306;;274976
+P;Bouche-noire huileux;182;;6358
+P;Boudin;40;;3220
+P;Boulettes fumées du désert;3000;;20452
+P;Breuvage de détection de l’invisibilité inférieure;150;;3828
+P;Breuvage de détection des démons;674;;9233
 P;Breuvage de détection des morts-vivants;300;;9154
-P;Breuvage de marche sur l’eau;1297;;8827
-P;Breuvage de respiration aquatique;344;;5996
-P;Breuvage de respiration aquatique supérieure;721;;18294
+P;Breuvage de marche sur l’eau;1143;;8827
+P;Breuvage de respiration aquatique;700;;5996
+P;Breuvage de respiration aquatique supérieure;730;;18294
 P;Breuvage de vision de rêve;800;;9197
-P;Breuvage d’œil de chat;1498;;10592
-P;Brouet de trotteur;258;;5477
-P;Bruscitt d'ours;3898;;250070
-P;Bûches épaisses;175100;;272941
-P;Calmar grillé;477;;13928
-P;Calmar hivernal cru;297;;13755
-P;Calot de glace;1587;;13467
-P;Carburant de fusée des gobelins;999;;9061
-P;Catalyseur élémentaire;134800;;18567
+P;Breuvage d’œil de chat;900;;10592
+P;Brouet de trotteur;150;;5477
+P;Bruscitt d'ours;2998;;250070
+P;Calmar grillé;540;;13928
+P;Calmar hivernal cru;292;;13755
+P;Calot de glace;1569;;13467
+P;Carburant de fusée des gobelins;1199;;9061
+P;Catalyseur élémentaire;134000;;18567
 P;Chair croustillante d'araignée;50;;1081
-P;Chair de clampant;320;;2674
-P;Chair de palourde;39;;5503
-P;Chair de palourde géante;350;;4655
-P;Chair de palourde piquante;69;;7974
-P;Chair de palourde relevée;46;;5504
-P;Chair de raptor;259;;12184
-P;Chair de ver des sables;2000;;20424
-P;Champignon fantôme;4500;;8845
-P;Champignon à pois rouges;6;;4605
-P;Chaperose;1276;;249424
-P;Charbon;420;;3857
-P;Chardonnier;984;;2452
-P;Chili de crabe épicé;1150;;12216
-P;Chili de souffle de dragon;1480;;12217
-P;Coeur de fauve;445;;10286
-P;Coeur de feu;4598;;7077
+P;Chair de clampant;190;;2674
+P;Chair de palourde;36;;5503
+P;Chair de palourde géante;400;;4655
+P;Chair de palourde piquante;62;;7974
+P;Chair de palourde relevée;47;;5504
+P;Chair de raptor;280;;12184
+P;Chair de ver des sables;2100;;20424
+P;Champignon fantôme;4453;;8845
+P;Champignon à pois rouges;27;;4605
+P;Chaperose;1050;;249424
+P;Charbon;462;;3857
+P;Chardonnier;450;;2452
+P;Chili de crabe épicé;1050;;12216
+P;Chili de souffle de dragon;1700;;12217
+P;Coeur de fauve;400;;10286
+P;Coeur de feu;5543;;7077
 P;Courante-surprise;2499;;18254
-P;Cristal de nexus;359988;;20725
-P;Cristal des arcanes;90000;;12363
-P;Cuir enchanté;13199;;12810
-P;Cuir immaculé;440;;249427
-P;Cuir lourd;229;;4234
-P;Cuir léger;96;;2318
-P;Cuir moyen;118;;2319
-P;Cuir robuste;1032;;8170
-P;Cuir épais;648;;4304
-P;Côtelettes de lion épicées;507;;3727
-P;Côtelettes de raptor bouillantes;748;;250073
-P;Côtes de loup épicées;399;;13851
+P;Cristal de nexus;449990;;20725
+P;Cristal des arcanes;84900;;12363
+P;Cuir enchanté;13299;;12810
+P;Cuir immaculé;340;;249427
+P;Cuir lourd;220;;4234
+P;Cuir léger;69;;2318
+P;Cuir moyen;90;;2319
+P;Cuir robuste;1399;;8170
+P;Cuir épais;920;;4304
+P;Côtelettes de lion épicées;499;;3727
+P;Côtelettes de raptor bouillantes;620;;250073
+P;Côtes de loup épicées;410;;13851
 P;Côtes de porc aux herbes;360;;2685
-P;Côtes de porc séchées;36;;2687
-P;Côtes de sanglier;248;;2677
-P;Côtes de sanglier des rochers;17;;2886
-P;Côtes de sanglier à la bière;130;;2888
-P;Diamant noir;50;;11754
-P;Don d'Arthas;3899;;9088
-P;Dorépine;498;;3821
-P;Doulourante;103;;2453
-P;Délice de déviant;539;;6657
-P;Délice de furie du loch;20;;6316
-P;Délice de sagerelle;301;;21217
-P;Délicieuses bouchées au raptor;100;;250079
-P;Délicieux steak de lion;390;;3728
-P;Eau de source;34;;159
-P;Eau élémentaire;825;;7070
-P;Eau-de-feu distillée;24998;;246948
-P;Ecaille de dragonnet vert;623;;7392
-P;Eglantine;108;;2450
-P;Elixir d'Agilité;882;;8949
+P;Côtes de porc séchées;25;;2687
+P;Côtes de sanglier;148;;2677
+P;Côtes de sanglier des rochers;54;;2886
+P;Côtes de sanglier à la bière;91;;2888
+P;Diamant noir;35;;11754
+P;Don d'Arthas;3700;;9088
+P;Dorépine;477;;3821
+P;Doulourante;240;;2453
+P;Délice de déviant;961;;6657
+P;Délice de furie du loch;17;;6316
+P;Délice de sagerelle;225;;21217
+P;Délicieuses bouchées au raptor;95;;250079
+P;Délicieux steak de lion;378;;3728
+P;Eau de source;14;;159
+P;Eau élémentaire;700;;7070
+P;Eau-de-feu distillée;24996;;246948
+P;Ecaille de dragonnet vert;811;;7392
+P;Eglantine;106;;2450
+P;Elixir d'Agilité;864;;8949
 P;Elixir d'Agilité inférieur;1049;;3390
-P;Elixir d'Agilité mineure;1299;;2457
-P;Elixir d'Agilité supérieure;2338;;9187
-P;Elixir d'Intelligence supérieure;51600;;9179
-P;Elixir de Force de brute;24599;;13453
-P;Elixir de Puissance de l'ombre;13050;;9264
-P;Elixir de Robustesse mineure;130;;2458
-P;Elixir de Sagesse;100;;3383
-P;Elixir de Taille de géant;828;;6662
+P;Elixir d'Agilité mineure;1100;;2457
+P;Elixir d'Agilité supérieure;2245;;9187
+P;Elixir d'Intelligence supérieure;1787;;9179
+P;Elixir de Force de brute;16980;;13453
+P;Elixir de Puissance de l'ombre;13028;;9264
+P;Elixir de Robustesse mineure;74;;2458
+P;Elixir de Sagesse;106;;3383
+P;Elixir de Taille de géant;800;;6662
 P;Elixir de défense mineure;5;;5997
-P;Elixir de la Mangouste;9498;;13452
-P;Elixir des Sages;13497;;13447
+P;Elixir de la Mangouste;11915;;13452
+P;Elixir des Sages;10297;;13447
 P;Elixir des arcanes;2000;;9155
 P;Elixir des arcanes supérieur;12000;;13454
-P;Emmental d'Alterac;1277;;8932
-P;Epices apaisantes;171;;3713
-P;Epices douces;3;;2678
-P;Epices fortes;48;;2692
-P;Essence astrale inférieure;473;;10998
-P;Essence astrale supérieure;1365;;11082
-P;Essence d'air;56666;;7082
-P;Essence d'eau;41487;;7080
-P;Essence de feu;19994;;7078
-P;Essence de magie inférieure;129;;10938
-P;Essence de magie supérieure;342;;10939
-P;Essence de non-mort;2498;;12808
-P;Essence de terre;50000;;7076
-P;Essence de vie;20000;;12803
-P;Essence du néant inférieure;3575;;11174
-P;Essence du néant supérieure;10889;;11175
-P;Essence mystique inférieure;814;;11134
-P;Essence mystique supérieure;2322;;11135
-P;Essence éternelle inférieure;8494;;16202
-P;Essence éternelle supérieure;25948;;16203
-P;Etouffante;201;;3820
-P;Farine simple;208;;10284
-P;Fermenteur;1100;;279970
-P;Feu élémentaire;4399;;7068
-P;Feuillargent;20;;765
-P;Feuillerêve;1779;;13463
-P;Filet de rouget;440;;13930
-P;Fiole de cristal;449;;8925
+P;Emmental d'Alterac;834;;8932
+P;Epices apaisantes;145;;3713
+P;Epices douces;5;;2678
+P;Epices fortes;45;;2692
+P;Essence astrale inférieure;457;;10998
+P;Essence astrale supérieure;1494;;11082
+P;Essence d'air;47506;;7082
+P;Essence d'eau;35566;;7080
+P;Essence de feu;19198;;7078
+P;Essence de magie inférieure;136;;10938
+P;Essence de magie supérieure;368;;10939
+P;Essence de non-mort;7009;;12808
+P;Essence de terre;54098;;7076
+P;Essence de vie;3789;;12803
+P;Essence du néant inférieure;4418;;11174
+P;Essence du néant supérieure;12125;;11175
+P;Essence mystique inférieure;806;;11134
+P;Essence mystique supérieure;2321;;11135
+P;Essence éternelle inférieure;8374;;16202
+P;Essence éternelle supérieure;25889;;16203
+P;Etouffante;265;;3820
+P;Farine simple;150;;10284
+P;Fermenteur;1850;;279970
+P;Feu élémentaire;3987;;7068
+P;Feuillargent;17;;765
+P;Feuillerêve;1493;;13463
+P;Filet de rouget;75;;13930
+P;Fiole de cristal;500;;8925
 P;Fiole imprégnée;3100;;18256
-P;Fiole plombée;42;;3372
+P;Fiole plombée;95;;3372
 P;Fiole vide;5;;3371
-P;Flacon de grand mojo;675;;8152
-P;Flacon de mojo;255;;8151
-P;Flacon de pouvoir suprême;239997;;13512
-P;Flacon de sagesse distillée;279999;;13511
+P;Flacon de grand mojo;509;;8152
+P;Flacon de mojo;250;;8151
+P;Flacon de pouvoir suprême;239995;;13512
+P;Flacon de sagesse distillée;249989;;13511
 P;Flacon des Titans;252998;;13510
-P;Flanchet au poivre;2899;;250069
-P;Fleur de feu;799;;4625
-P;Fleur de peste;2497;;13466
-P;Foie de Broche-tripes;129;;723
-P;Fonderie en fusion;43500;;279952
+P;Flanchet au poivre;2896;;250069
+P;Fleur de feu;944;;4625
+P;Fleur de peste;2650;;13466
+P;Foie de Broche-tripes;114;;723
+P;Fonderie en fusion;41900;;279952
 P;Forge arcanique;200000;;279987
-P;Frappé gélatineux;180;;249872
-P;Frappé épicé;2450;;249875
+P;Frappé gélatineux;148;;249872
+P;Frappé épicé;2199;;249875
 P;Furie du loch crue;5;;6317
-P;Gangrecristal;73900;;248819
-P;Globe d'eau;975;;7079
+P;Gangrecristal;72999;;248819
+P;Globe d'eau;500;;7079
 P;Gombo de crocilisque;116;;3664
-P;Goujon brillant;18;;6290
-P;Goujon brillant cru;43;;6291
-P;Goulash des Carmines;157;;1082
-P;Graine d'érable;325;;17034
-P;Graine de strangleronce;399;;17035
-P;Grand croc;162;;5637
-P;Grand éclat brillant;28800;;14344
-P;Grande glande à venin;187;;1288
-P;Grande sagerelle crue;209;;21153
-P;Granule de magie;5;;247786
-P;Griffe aiguisée;95;;5635
-P;Gromsang;2371;;8846
-P;Gros éclat irradiant;19488;;11178
-P;Gros éclat luminescent;4019;;11139
-P;Gros éclat scintillant;3249;;11084
-P;Hantefeuille;5013;;248823
-P;Hivernale;920;;3819
-P;Homard Pince-noire;699;;13888
-P;Huile d'immolation;2100;;8956
-P;Huile de bouche-noire;465;;6370
-P;Huile de feu;27;;6371
-P;Huile de pierre-écaille;210;;13423
-P;Huile des ténèbres;2656;;3824
-P;Huile glaciale;2140;;3829
-P;Ichor d'araignée;25;;3174
-P;Ichor de non-mort;1181;;7972
-P;Index de liche;26300;;273125
-P;Jardin de pierres;2349;;279948
+P;Goujon brillant;13;;6290
+P;Goujon brillant cru;35;;6291
+P;Goulash des Carmines;149;;1082
+P;Graine d'érable;270;;17034
+P;Graine de strangleronce;1080;;17035
+P;Grand croc;99;;5637
+P;Grand éclat brillant;28787;;14344
+P;Grande glande à venin;200;;1288
+P;Grande sagerelle crue;200;;21153
+P;Granule de magie;26;;247786
+P;Griffe aiguisée;50;;5635
+P;Gromsang;2346;;8846
+P;Gros éclat irradiant;18000;;11178
+P;Gros éclat luminescent;3845;;11139
+P;Gros éclat scintillant;3499;;11084
+P;Hantefeuille;4309;;248823
+P;Hivernale;1000;;3819
+P;Homard Pince-noire;695;;13888
+P;Huile d'immolation;595;;8956
+P;Huile de bouche-noire;437;;6370
+P;Huile de feu;45;;6371
+P;Huile de pierre-écaille;199;;13423
+P;Huile des ténèbres;1997;;3824
+P;Huile glaciale;2099;;3829
+P;Ichor d'araignée;24;;3174
+P;Ichor de non-mort;450;;7972
+P;Index de liche;26100;;273125
+P;Jardin de pierres;2233;;279948
 P;Jaune-queue tacheté;73;;6887
-P;Jaune-queue tacheté cru;71;;4603
-P;Kébab d'araignée kaldorei;29;;5472
-P;Kébab de loup assaisonné;105;;1017
-P;Laboratoire d’alchimie;69980;;279990
-P;Lait glacé;44;;1179
-P;Larmes d'Arthas;3295;;8836
-P;Lichen à volants;3799;;249399
-P;Lotus mortifère;99395;;248822
-P;Lotus noir;95589;;13468
-P;Lotus pourpre;695;;8831
-P;Luth enchanté;199;;279976
+P;Jaune-queue tacheté cru;44;;4603
+P;Kébab d'araignée kaldorei;28;;5472
+P;Kébab de loup assaisonné;115;;1017
+P;Laboratoire d’alchimie;69975;;279990
+P;Lait glacé;24;;1179
+P;Larmes d'Arthas;1700;;8836
+P;Lichen à volants;3399;;249399
+P;Lotus mortifère;92344;;248822
+P;Lotus noir;86499;;13468
+P;Lotus pourpre;574;;8831
+P;Luth enchanté;700;;279976
 P;Lutjan de nagefeu;25;;6359
-P;Lutjan nagenuit cru;178;;13759
-P;Lutjan à longue mâchoire;17;;4592
-P;Lutjan à longue mâchoire cru;6;;6289
-P;Mage royal;77;;785
-P;Magnétite;470;;279960
-P;Maquereau ombré;22;;787
-P;Maquereau ombré cru;20;;6303
-P;Minerai d'argent;747;;2775
-P;Minerai d'or;1140;;2776
-P;Minerai d'étain;145;;2771
-P;Minerai de cuivre;145;;2770
-P;Minerai de fer;269;;2772
-P;Minerai de mithril;1035;;3858
-P;Minerai de sombrefer;760;;11370
-P;Minerai de thorium;2053;;10620
-P;Minerai de thorium lourd;6994;;248815
-P;Minerai de vrai-argent;1244;;7911
-P;Mini-burgers de cerf savoureux;3585;;250065
-P;Mojo puissant;20019;;12804
-P;Morceau de viande de sanglier;85;;769
-P;Morue rochécaille;18;;4594
+P;Lutjan nagenuit cru;450;;13759
+P;Lutjan à longue mâchoire;14;;4592
+P;Lutjan à longue mâchoire cru;5;;6289
+P;Mage royal;75;;785
+P;Magnétite;196;;279960
+P;Maquereau ombré;20;;787
+P;Maquereau ombré cru;15;;6303
+P;Minerai d'argent;680;;2775
+P;Minerai d'or;909;;2776
+P;Minerai d'étain;146;;2771
+P;Minerai de cuivre;128;;2770
+P;Minerai de fer;372;;2772
+P;Minerai de mithril;999;;3858
+P;Minerai de sombrefer;831;;11370
+P;Minerai de thorium;1512;;10620
+P;Minerai de thorium lourd;2289;;248815
+P;Minerai de vrai-argent;1599;;7911
+P;Mini-burgers de cerf savoureux;1399;;250065
+P;Mojo puissant;18009;;12804
+P;Morceau de viande de sanglier;99;;769
+P;Morue rochécaille;10;;4594
 P;Morue rochécaille crue;5;;6362
-P;Moustache de Khadgar;389;;3358
-P;Mérou de Sombrivage;10;;12238
-P;Nectar sucré;139;;1708
-P;Noyau de terre;452;;7075
-P;Oeil de murloc;70;;730
-P;Oeil ténébreux;263;;1210
+P;Moustache de Khadgar;424;;3358
+P;Mérou de Sombrivage;14;;12238
+P;Nectar sucré;153;;1708
+P;Noyau de terre;600;;7075
+P;Oeil de murloc;128;;730
+P;Oeil ténébreux;240;;1210
 P;Omelette au goût étrange;150;;3665
 P;Omelette de petit déjeuner;87;;250080
-P;Omelette monstrueuse;1530;;12218
-P;Orbe de piété;120098;;12811
-P;Outre de bière naine;195;;2596
-P;Pacifique;90;;2447
-P;Pain de saumon;990;;13935
+P;Omelette monstrueuse;1499;;12218
+P;Orbe de piété;110000;;12811
+P;Outre de bière naine;194;;2596
+P;Pacifique;75;;2447
+P;Pain de saumon;939;;13935
 P;Palourdes bouillies;20;;5525
 P;Palourdes gobelines;95;;5527
-P;Papier de verre;1180;;249432
-P;Parchemin d'Intelligence IV;2700;;10308
-P;Parchemin de Force II;264;;2289
-P;Parchemin de Protection;40;;3013
-P;Parchemin vierge;1286;;10648
-P;Patte d'araignée fondante;150;;2251
-P;Paupiette de raptor;799;;250076
-P;Peau immaculée;281;;249428
-P;Peau lourde;1384;;4235
-P;Peau légère;90;;783
-P;Peau moyenne;387;;4232
-P;Peau robuste;4021;;8171
-P;Peau robuste traitée;319696;;15407
-P;Peau épaisse;520;;8169
-P;Pechblende;1396;;249426
-P;Perle dorée;18999;;13926
-P;Perle iridescente;805;;5500
-P;Perle noire;1497;;7971
-P;Petit sac de flammes;1033;;4402
-P;Petit éclat brillant;6383;;14343
-P;Petit éclat irradiant;5757;;11177
-P;Petit éclat luminescent;997;;11138
-P;Petit éclat scintillant;392;;10978
-P;Petit œuf;60;;6889
-P;Petite patte d'araignée;17;;5465
-P;Pierre brute;7;;2835
-P;Pierre de gardien;45097;;12809
-P;Pierre dense;276;;12365
-P;Pierre lourde;397;;2838
-P;Pince de clampant;59;;2675
-P;Pince de crabe farcie;46;;2682
-P;Poisson cuirassé;399;;286152
+P;Papier de verre;1511;;249432
+P;Parchemin d'Intelligence IV;2097;;10308
+P;Parchemin de Force II;441;;2289
+P;Parchemin de Protection;49;;3013
+P;Parchemin vierge;888;;10648
+P;Patte d'araignée fondante;30;;2251
+P;Paupiette de raptor;770;;250076
+P;Peau immaculée;258;;249428
+P;Peau lourde;1371;;4235
+P;Peau légère;119;;783
+P;Peau moyenne;279;;4232
+P;Peau robuste;970;;8171
+P;Peau robuste traitée;307984;;15407
+P;Peau épaisse;501;;8169
+P;Pechblende;1250;;249426
+P;Perle dorée;16501;;13926
+P;Perle iridescente;788;;5500
+P;Perle noire;1300;;7971
+P;Petit sac de flammes;1099;;4402
+P;Petit éclat brillant;6220;;14343
+P;Petit éclat irradiant;6659;;11177
+P;Petit éclat luminescent;1042;;11138
+P;Petit éclat scintillant;450;;10978
+P;Petit œuf;58;;6889
+P;Petite patte d'araignée;14;;5465
+P;Pierre brute;8;;2835
+P;Pierre de gardien;34900;;12809
+P;Pierre dense;364;;12365
+P;Pierre lourde;373;;2838
+P;Pince de clampant;33;;2675
+P;Pince de crabe farcie;79;;2682
+P;Poisson cuirassé;374;;286152
 P;Poisson cuirassé cru;70;;13890
-P;Poisson déviant;499;;6522
-P;Poisson-chat moustachu;15;;4593
-P;Poisson-chat moustachu cru;21;;6308
-P;Poitrine d'ours;650;;250074
-P;Pomme rouge brillante;9;;4536
-P;Potion d'Invisibilité inférieure;700;;3823
-P;Potion d'invisibilité;8498;;9172
-P;Potion d'invulnérabilité limitée;8866;;3387
-P;Potion de Bouclier de pierre inférieure;398;;4623
-P;Potion de Bouclier de pierre supérieure;3681;;13455
-P;Potion de Grande rage;180;;5633
-P;Potion de Nage rapide;500;;6372
-P;Potion de Protection contre le Feu supérieure;8890;;13457
-P;Potion de Rage;59;;5631
-P;Potion de Rapidité;1128;;2459
-P;Potion de bouclier de pierre inférieure;398;;4623
-P;Potion de brume caustique;21022;;250951
-P;Potion de feu draconique;4275;;250953
-P;Potion de frénésie;1500;;250940
-P;Potion de frénésie excellente;7500;;250942
-P;Potion de frénésie majeure;14996;;250943
+P;Poisson déviant;1468;;6522
+P;Poisson-chat moustachu;11;;4593
+P;Poisson-chat moustachu cru;11;;6308
+P;Poitrine d'ours;510;;250074
+P;Pomme rouge brillante;7;;4536
+P;Potion d'Invisibilité inférieure;499;;3823
+P;Potion d'invisibilité;5800;;9172
+P;Potion d'invulnérabilité limitée;6747;;3387
+P;Potion de Bouclier de pierre inférieure;396;;4623
+P;Potion de Bouclier de pierre supérieure;3000;;13455
+P;Potion de Grande rage;209;;5633
+P;Potion de Nage rapide;150;;6372
+P;Potion de Protection contre le Feu supérieure;8799;;13457
+P;Potion de Rage;60;;5631
+P;Potion de Rapidité;1098;;2459
+P;Potion de bouclier de pierre inférieure;396;;4623
+P;Potion de brume caustique;15022;;250951
+P;Potion de feu draconique;4274;;250953
+P;Potion de frénésie;1449;;250940
+P;Potion de frénésie excellente;7400;;250942
+P;Potion de frénésie inférieure;647;;250939
+P;Potion de frénésie majeure;14595;;250943
 P;Potion de frénésie mineure;27;;250938
-P;Potion de frénésie supérieure;4996;;250941
-P;Potion de libre action;1371;;5634
-P;Potion de mana;203;;3827
-P;Potion de mana excellente;3680;;13443
-P;Potion de mana inférieure;40;;3385
-P;Potion de mana majeure;7000;;13444
-P;Potion de mana mineure;19;;2455
-P;Potion de mana supérieure;485;;6149
-P;Potion de protection contre l'Ombre;400;;6048
+P;Potion de frénésie supérieure;1995;;250941
+P;Potion de libre action;1350;;5634
+P;Potion de mana;185;;3827
+P;Potion de mana excellente;6989;;13443
+P;Potion de mana inférieure;35;;3385
+P;Potion de mana majeure;8299;;13444
+P;Potion de mana mineure;23;;2455
+P;Potion de mana supérieure;799;;6149
+P;Potion de protection contre l'Ombre;280;;6048
 P;Potion de protection contre la Nature;300;;6052
-P;Potion de protection contre la Nature supérieure;29999;;13458
-P;Potion de protection contre le Feu;1234;;6049
-P;Potion de protection contre le Givre;1600;;6050
-P;Potion de protection contre le Givre supérieure;6869;;13456
+P;Potion de protection contre la Nature supérieure;29998;;13458
+P;Potion de protection contre le Feu;1210;;6049
+P;Potion de protection contre le Givre;1597;;6050
+P;Potion de protection contre le Givre supérieure;6868;;13456
 P;Potion de protection contre le Sacré;62;;6051
-P;Potion de protection contre les Arcanes supérieure;39889;;13461
-P;Potion de purge d’élémentaires;55686;;250954
+P;Potion de protection contre les Arcanes supérieure;39886;;13461
+P;Potion de purge d’élémentaires;30000;;250954
 P;Potion de rage puissante;5996;;13442
-P;Potion de régénération majeure;18800;;18253
+P;Potion de régénération majeure;18799;;18253
 P;Potion de régénération mineure;15;;2456
-P;Potion de résistance à la magie;289;;9036
-P;Potion de résistance à la magie mineure;38;;3384
-P;Potion de sang envenimé;68421;;250950
-P;Potion de sauvageonne;733;;9144
-P;Potion de sens de prédateur;697;;250327
-P;Potion de soigneur;3999;;250946
-P;Potion de soigneur inférieure;500;;250945
-P;Potion de soigneur majeure;19000;;250949
-P;Potion de soigneur mineure;482;;250944
-P;Potion de soigneur supérieure;62;;250947
-P;Potion de soins décolorée;190;;247240
-P;Potion de soins excellente décolorée;2109;;247242
+P;Potion de résistance à la magie;200;;9036
+P;Potion de résistance à la magie mineure;29;;3384
+P;Potion de sang envenimé;48421;;250950
+P;Potion de sauvageonne;1957;;9144
+P;Potion de sens de prédateur;498;;250327
+P;Potion de soigneur;3998;;250946
+P;Potion de soigneur inférieure;300;;250945
+P;Potion de soigneur majeure;17500;;250949
+P;Potion de soigneur mineure;395;;250944
+P;Potion de soigneur supérieure;51;;250947
+P;Potion de soins décolorée;148;;247240
+P;Potion de soins excellente décolorée;3906;;247242
 P;Potion de soins inférieure décolorée;79;;247239
-P;Potion de soins majeure décolorée;3909;;241650
-P;Potion de soins mineure décolorée;60;;4596
-P;Potion de soins supérieure décolorée;374;;247241
-P;Potion de sommeil sans rêve;350;;12190
-P;Potion de tueur de bêtes;1200;;250955
-P;Potion de tueur de démons;14600;;9224
-P;Potion d’explosion de sorts;1594;;250934
-P;Potion d’explosion de sorts excellente;3999;;250936
-P;Potion d’explosion de sorts inférieure;83;;250933
-P;Potion d’explosion de sorts majeure;15089;;250937
-P;Potion d’explosion de sorts mineure;60;;250932
-P;Potion d’explosion de sorts supérieure;1384;;250935
-P;Poudre d'illusion;3798;;16204
-P;Poussière d'âme;402;;11083
-P;Poussière de rêve;2444;;11176
-P;Poussière de vision;899;;11137
-P;Poussière étrange;113;;10940
-P;Puits de mana;189;;279956
-P;Pyrite;270;;249391
-P;Pâlerette;744;;3818
+P;Potion de soins majeure décolorée;3455;;241650
+P;Potion de soins mineure décolorée;59;;4596
+P;Potion de soins supérieure décolorée;970;;247241
+P;Potion de sommeil sans rêve;1940;;12190
+P;Potion de tueur de bêtes;1295;;250955
+P;Potion de tueur de démons;14345;;9224
+P;Potion d’explosion de sorts;790;;250934
+P;Potion d’explosion de sorts excellente;2799;;250936
+P;Potion d’explosion de sorts inférieure;100;;250933
+P;Potion d’explosion de sorts majeure;12085;;250937
+P;Potion d’explosion de sorts mineure;51;;250932
+P;Potion d’explosion de sorts supérieure;1318;;250935
+P;Poudre d'illusion;3000;;16204
+P;Poussière d'âme;475;;11083
+P;Poussière de rêve;2815;;11176
+P;Poussière de vision;936;;11137
+P;Poussière étrange;109;;10940
+P;Puits de mana;110;;279956
+P;Pyrite;200;;249391
+P;Pâlerette;548;;3818
 P;Queue de lézard croquante;738;;5479
-P;Queue de lézard-tonnerre;155;;5470
-P;Racine de Courante;1965;;18255
-P;Ragoût de la jungle;354;;12212
-P;Ragoût de tortue savoureux;7500;;250068
-P;Ragoût mystère;399;;12214
-P;Ragoût épais de crocilisque;650;;20074
-P;Ragoût épais de kodo;598;;12215
-P;Rhum explosif;531;;9260
-P;Rouget cru;47;;13758
-P;Récupérateur arcanique;6499;;279985
-P;Rôti de raptor;339;;12210
-P;Sagerelle crue;75;;21071
-P;Sagerelle fumée;105;;21072
-P;Sang de la montagne;14800;;11382
-P;Sang-royal;169;;3356
-P;Sansam doré;1309;;13464
-P;Saucisse d'araignée;575;;17222
-P;Sauge démoniaque;7538;;248821
-P;Sauge-argent des montagnes;2088;;13465
-P;Saumon Blanchécaille cru;597;;13889
-P;Saumon blanchécaille cru;597;;13889
-P;Saumon solécaille cru;485;;13760
-P;Saumon solécaille poché;640;;13932
-P;Sauvageonne;91;;8153
-P;Sel de Fonderoc;282;;8150
-P;Soleillette;1200;;8838
-P;Souffle de vent;1300;;7081
-P;Soufflé de Mur-Céleste;198;;263509
+P;Queue de lézard-tonnerre;230;;5470
+P;Racine de Courante;1932;;18255
+P;Ragoût de homard;989;;13933
+P;Ragoût de la jungle;399;;12212
+P;Ragoût de tortue savoureux;5999;;250068
+P;Ragoût mystère;389;;12214
+P;Ragoût épais de crocilisque;500;;20074
+P;Ragoût épais de kodo;597;;12215
+P;Rhum explosif;500;;9260
+P;Rouget cru;25;;13758
+P;Récupérateur arcanique;6439;;279985
+P;Rôti de raptor;335;;12210
+P;Sagerelle crue;76;;21071
+P;Sagerelle fumée;99;;21072
+P;Sang de la montagne;14300;;11382
+P;Sang-royal;139;;3356
+P;Sansam doré;1301;;13464
+P;Saucisse d'araignée;538;;17222
+P;Sauge démoniaque;5424;;248821
+P;Sauge-argent des montagnes;1521;;13465
+P;Saumon Blanchécaille cru;1899;;13889
+P;Saumon blanchécaille cru;1899;;13889
+P;Saumon solécaille cru;308;;13760
+P;Saumon solécaille poché;399;;13932
+P;Sauvageonne;65;;8153
+P;Sel de Fonderoc;259;;8150
+P;Soleillette;2359;;8838
+P;Souffle de vent;1000;;7081
+P;Soufflé de Mur-Céleste;200;;263509
 P;Soupe aux ailerons de murloc;125;;3663
-P;Soupe de lutjan nagenuit;410;;13931
+P;Soupe de lutjan nagenuit;300;;13931
 P;Soupe de palourdes;75;;5526
-P;Soupe de palourdes d'Undermine;124;;16766
+P;Soupe de palourdes d'Undermine;120;;16766
 P;Steak de cerf fumant;2300;;250071
-P;Steak de coyote;239;;2684
-P;Steak de crocilisque;184;;3662
-P;Steak de frappe rapide;3166;;250072
-P;Steak de grand ours;169;;3726
-P;Steak de loup;290;;1015
-P;Steak de loup tendre;479;;18045
-P;Stranglevigne;4448;;249274
-P;Teinture céruléenne;8246;;249409
-P;Teinture fantôme;5000;;9210
-P;Teinture magenta;2990;;249430
-P;Teinture pourpre;1700;;4342
-P;Teinture viridienne;10448;;249431
-P;Terre élémentaire;2799;;7067
-P;Terrestrine;100;;2449
-P;Thon arc-en-ciel;16;;5095
-P;Thon arc-en-ciel cru;6;;6361
+P;Steak de coyote;197;;2684
+P;Steak de crocilisque;166;;3662
+P;Steak de frappe rapide;3065;;250072
+P;Steak de grand ours;200;;3726
+P;Steak de loup;164;;1015
+P;Steak de loup tendre;455;;18045
+P;Stranglevigne;4096;;249274
+P;Teinture céruléenne;7636;;249409
+P;Teinture fantôme;8244;;9210
+P;Teinture magenta;2575;;249430
+P;Teinture pourpre;4850;;4342
+P;Teinture viridienne;9397;;249431
+P;Terre élémentaire;2933;;7067
+P;Terrestrine;81;;2449
+P;Thon arc-en-ciel;13;;5095
+P;Thon arc-en-ciel cru;7;;6361
+P;Thé de triage;3000;;249868
 P;Thé du soleil;3990;;249869
-P;Tombeline;465;;3369
-P;Torbernite;26400;;248820
-P;Tourte au foie de Broche-tripes;80;;724
-P;Tourte d'araignée fondante;166;;3666
-P;Tourte surprise;463;;12213
+P;Tombeline;297;;3369
+P;Torbernite;22390;;248820
+P;Tourte au foie de Broche-tripes;60;;724
+P;Tourte d'araignée fondante;160;;3666
+P;Tourte surprise;458;;12213
 P;Tripes de sanglier;18;;3172
-P;Truite tête-mithril;100;;8364
-P;Truite tête-mithril crue;277;;8365
-P;Venaison dégraissée;300;;5480
-P;Viande d'araignée blanche;367;;12205
-P;Viande d'ours;88;;3173
-P;Viande d'ours fumée;60;;6890
-P;Viande de cerf;898;;5471
-P;Viande de condor coriace;1173;;1080
-P;Viande de coyote;499;;2673
-P;Viande de crabe tendre;789;;12206
-P;Viande de crocilisque;105;;2924
-P;Viande de crocilisque tendre;80;;3667
-P;Viande de grand ours;266;;3730
-P;Viande de kodo;192;;5467
-P;Viande de kodo épaisse;282;;12204
-P;Viande de lion;198;;3731
-P;Viande de loup grillée;12;;2679
-P;Viande de loup maigre;118;;2672
-P;Viande de loup rouge;223;;12203
-P;Viande de loup tendre;488;;12208
-P;Viande de loup épicée;79;;2680
-P;Viande de sanglier rôtie;69;;2681
-P;Viande de tigre;553;;12202
-P;Viande de tortue;289;;3712
-P;Viande de trotteur;279;;5469
-P;Viande mystère;270;;12037
-P;Vietérule;255;;3357
-P;Vitriol noir;4300;;9262
-P;Écaille de dragon noir;9495;;15416
-P;Écaille de déviant;119;;6470
-P;Écaille de tortue;623;;8167
-P;Écaille immaculée;9250;;249429
-P;Élixir de Force;2299;;250349
-P;Élixir de Force mineure;75;;2454
-P;Élixir de Force supérieure;5696;;9206
-P;Élixir de défense;481;;8951
-P;Élixir de défense inférieure;526;;3389
-P;Élixir de défense supérieure;733;;13445
-P;Élixir de force d’ogre;427;;3391
-P;Élixir de férocité;24999;;250350
+P;Truite tête-mithril;265;;8364
+P;Truite tête-mithril crue;160;;8365
+P;Venaison dégraissée;298;;5480
+P;Viande d'araignée blanche;296;;12205
+P;Viande d'ours;31;;3173
+P;Viande d'ours fumée;59;;6890
+P;Viande de cerf;350;;5471
+P;Viande de condor coriace;848;;1080
+P;Viande de coyote;504;;2673
+P;Viande de crabe tendre;776;;12206
+P;Viande de crocilisque;97;;2924
+P;Viande de crocilisque tendre;25;;3667
+P;Viande de grand ours;198;;3730
+P;Viande de kodo;189;;5467
+P;Viande de kodo épaisse;350;;12204
+P;Viande de lion;237;;3731
+P;Viande de loup grillée;9;;2679
+P;Viande de loup maigre;100;;2672
+P;Viande de loup rouge;150;;12203
+P;Viande de loup tendre;330;;12208
+P;Viande de loup épicée;69;;2680
+P;Viande de sanglier rôtie;35;;2681
+P;Viande de tigre;509;;12202
+P;Viande de tortue;397;;3712
+P;Viande de trotteur;260;;5469
+P;Viande mystère;266;;12037
+P;Vietérule;217;;3357
+P;Vitriol noir;1000;;9262
+P;Écaille de dragon noir;9099;;15416
+P;Écaille de déviant;89;;6470
+P;Écaille de tortue;699;;8167
+P;Écaille immaculée;6799;;249429
+P;Élixir de Force;2195;;250349
+P;Élixir de Force mineure;164;;2454
+P;Élixir de Force supérieure;4650;;9206
+P;Élixir de défense;450;;8951
+P;Élixir de défense inférieure;500;;3389
+P;Élixir de défense supérieure;628;;13445
+P;Élixir de force d’ogre;373;;3391
+P;Élixir de férocité;19899;;250350
 P;Élixir de la baleine;13299;;250348
-P;Élixir de la chouette;16689;;250337
-P;Élixir de la phalange;12284;;250329
-P;Élixir de puissance de la nature;18886;;250343
+P;Élixir de la chouette;16288;;250337
+P;Élixir de la phalange;12283;;250329
+P;Élixir de puissance de la nature;17450;;250343
 P;Élixir de puissance du feu;35;;6373
-P;Élixir de puissance sacrée;3700;;21546
-P;Élixir de robustesse;2262;;250334
-P;Élixir de robustesse inférieure;660;;3825
-P;Élixir de robustesse supérieure;9999;;250335
-P;Élixir de ruse;16994;;250328
+P;Élixir de puissance sacrée;3680;;21546
+P;Élixir de robustesse;2349;;250334
+P;Élixir de robustesse inférieure;615;;3825
+P;Élixir de robustesse supérieure;9000;;250335
+P;Élixir de ruse;14000;;250328
 P;Élixir de régénération maudite;10999;;250336
-P;Élixir de sang de Troll;460;;3826
-P;Élixir de sang de Troll inférieur;126;;3388
-P;Élixir de sang de Troll mineur;200;;3382
-P;Élixir des arcanes inférieur;670;;250342
-P;Élixir des arcanes mineur;100;;247754
-P;Élixir des clercs;6500;;250332
-P;Élixir des clercs inférieur;1000;;250331
-P;Élixir des clercs mineur;150;;250330
-P;Élixir des clercs supérieur;9499;;250333
-P;Élixir du grizzly;18888;;250351
-P;Élixir d’Esprit;1953;;250346
-P;Élixir d’Esprit inférieur;977;;250345
-P;Élixir d’Esprit mineur;591;;250344
-P;Élixir d’Esprit supérieur;7275;;250347
-P;Élixir d’Intelligence;897;;250354
-P;Élixir d’Intelligence inférieure;498;;250353
-P;Élixir magesang inférieur;490;;250340
-P;Élixir magesang mineur;254;;250339
-P;Élixir magesang supérieur;9998;;250341
-P;Épices apaisantes;171;;3713
-P;Épices douces;3;;2678
-P;Épices fortes;48;;2692
-P;Étincelle d’invention;27500;;273128
-P;Œuf de raptor;114;;3685
-P;Œuf géant;1539;;12207
-P;Œufs aux herbes;45;;6888
+P;Élixir de sang de Troll;661;;3826
+P;Élixir de sang de Troll inférieur;106;;3388
+P;Élixir de sang de Troll mineur;119;;3382
+P;Élixir des arcanes inférieur;949;;250342
+P;Élixir des arcanes mineur;102;;247754
+P;Élixir des clercs;5098;;250332
+P;Élixir des clercs inférieur;1050;;250331
+P;Élixir des clercs mineur;154;;250330
+P;Élixir des clercs supérieur;6999;;250333
+P;Élixir du grizzly;10988;;250351
+P;Élixir d’Esprit;1039;;250346
+P;Élixir d’Esprit inférieur;799;;250345
+P;Élixir d’Esprit mineur;416;;250344
+P;Élixir d’Esprit supérieur;8900;;250347
+P;Élixir d’Intelligence;2000;;250354
+P;Élixir d’Intelligence inférieure;488;;250353
+P;Élixir magesang inférieur;529;;250340
+P;Élixir magesang mineur;244;;250339
+P;Élixir magesang supérieur;10997;;250341
+P;Émincé de raptor aux deux épices;246;;250077
+P;Épices apaisantes;145;;3713
+P;Épices douces;5;;2678
+P;Épices fortes;45;;2692
+P;Étincelle d’invention;27504;;273128
+P;Œuf de raptor;129;;3685
+P;Œuf géant;1234;;12207
+P;Œufs aux herbes;29;;6888
