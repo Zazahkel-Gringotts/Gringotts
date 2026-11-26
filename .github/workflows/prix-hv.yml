@@ -29,6 +29,8 @@ jobs:
           BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
           GT_AH: ${{ vars.GT_AH }}
         run: python tools/prix_hv.py
+      - name: Fichier Prices.lua pour l'addon
+        run: python tools/build_prices_lua.py
       - name: Publier
         run: |
           git config user.name "gringotts-bot"
